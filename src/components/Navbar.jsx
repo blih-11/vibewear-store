@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { useCurrency, CURRENCIES } from '../context/CurrencyContext';
 
 export default function Navbar() {
@@ -8,6 +9,9 @@ export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const { cartCount, setSearchOpen } = useCart();
+  const { user, logout } = useAuth();
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef(null);
   const { currency, setCurrency, currentCurrency } = useCurrency();
   const location = useLocation();
 
@@ -136,6 +140,50 @@ export default function Navbar() {
               </>
             )}
           </div>
+
+          {/* Account - hidden on mobile, shown in hamburger menu */}
+          <div className="account-btn-desktop" style={{ position: 'relative' }} ref={accountRef}>
+            <button
+              onClick={() => setAccountOpen(o => !o)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              {user?.photoURL
+                ? <img src={user.photoURL} alt="" style={{ width: 22, height: 22, borderRadius: '50%', objectFit: 'cover' }} />
+                : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              }
+            </button>
+            {accountOpen && (
+              <>
+                <div style={{ position: 'fixed', inset: 0, zIndex: 149 }} onClick={() => setAccountOpen(false)} />
+                <div style={{ position: 'absolute', top: 'calc(100% + 8px)', right: 0, background: '#0e0e0e', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '14px', padding: '8px', minWidth: '200px', zIndex: 150, boxShadow: '0 20px 40px rgba(0,0,0,0.8)' }}>
+                  {user ? (
+                    <>
+                      <div style={{ padding: '8px 12px 10px', borderBottom: '1px solid rgba(255,255,255,0.07)', marginBottom: '4px' }}>
+                        <p style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 600 }}>{user.displayName || 'Account'}</p>
+                        <p style={{ color: '#555', fontSize: '0.65rem', marginTop: '2px', fontFamily: 'var(--font-mono)' }}>{user.email}</p>
+                      </div>
+                      <Link to="/orders" onClick={() => setAccountOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '8px', color: '#aaa', textDecoration: 'none', fontSize: '0.78rem', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background='rgba(255,255,255,0.05)'}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                        Order History
+                      </Link>
+                      <button onClick={() => { logout(); setAccountOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '8px', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.78rem', transition: 'background 0.15s' }}
+                        onMouseEnter={e => e.currentTarget.style.background='rgba(248,113,113,0.08)'}
+                        onMouseLeave={e => e.currentTarget.style.background='transparent'}>
+                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        Sign Out
+                      </button>
+                    </>
+                  ) : (
+                    <Link to="/auth" onClick={() => setAccountOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: '8px', color: '#aaa', textDecoration: 'none', fontSize: '0.78rem' }}>
+                      Sign In
+                    </Link>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
           <button onClick={() => setSearchOpen && setSearchOpen(true)}
             className="search-btn-desktop"
             style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: '4px', display: 'flex', alignItems: 'center' }}>
@@ -189,6 +237,37 @@ export default function Navbar() {
           ))}
         </div>
         <div style={{ padding: '1.5rem 2rem', borderTop: '1px solid #111', display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          {/* Profile in mobile menu */}
+          {user ? (
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.07)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {user.photoURL
+                  ? <img src={user.photoURL} alt="" style={{ width: 28, height: 28, borderRadius: '50%', objectFit: 'cover' }} />
+                  : <div style={{ width: 28, height: 28, borderRadius: '50%', background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#aaa" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    </div>
+                }
+                <div>
+                  <p style={{ color: '#fff', fontSize: '0.78rem', fontWeight: 600 }}>{user.displayName || 'Account'}</p>
+                  <p style={{ color: '#555', fontSize: '0.62rem', fontFamily: 'var(--font-mono)' }}>{user.email}</p>
+                </div>
+              </div>
+              <Link to="/orders" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 16px', color: '#888', textDecoration: 'none', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                ORDER HISTORY
+              </Link>
+              <button onClick={() => { logout(); setMenuOpen(false); }} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '11px 16px', background: 'transparent', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                SIGN OUT
+              </button>
+            </div>
+          ) : (
+            <Link to="/auth" onClick={() => setMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', color: '#aaa', textDecoration: 'none', fontSize: '0.75rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.08em' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              SIGN IN / CREATE ACCOUNT
+            </Link>
+          )}
+
           {/* Search in mobile menu */}
           <button
             onClick={() => { setSearchOpen && setSearchOpen(true); setMenuOpen(false); }}
@@ -293,8 +372,8 @@ export default function Navbar() {
 
       <style>{`
         @keyframes fadeUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
-        @media(min-width:768px){ .hamburger-btn{display:none!important} .bottom-nav{display:none!important} .desktop-nav{display:flex!important} .search-btn-desktop{display:flex!important} }
-        @media(max-width:767px){ .desktop-nav{display:none!important} .search-btn-desktop{display:none!important} }
+        @media(min-width:768px){ .hamburger-btn{display:none!important} .bottom-nav{display:none!important} .desktop-nav{display:flex!important} .search-btn-desktop{display:flex!important} .account-btn-desktop{display:block!important} }
+        @media(max-width:767px){ .desktop-nav{display:none!important} .search-btn-desktop{display:none!important} .account-btn-desktop{display:none!important} }
       `}</style>
     </>
   );

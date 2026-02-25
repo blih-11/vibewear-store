@@ -81,3 +81,37 @@ export async function trackActivity(user) {
     body: JSON.stringify({ uid: user.uid, email: user.email, name: user.displayName }),
   }).catch(() => {}); // silent fail — analytics should never break the app
 }
+
+// ── Cart persistence ──────────────────────────────────────────────────────────
+export async function getSavedCart(uid) {
+  const res = await fetch(`${BASE}/cart/${uid}`);
+  return res.json();
+}
+
+export async function saveCart(uid, items) {
+  const res = await fetch(`${BASE}/cart/${uid}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ items }),
+  });
+  return res.json();
+}
+
+export async function clearSavedCart(uid) {
+  await fetch(`${BASE}/cart/${uid}`, { method: 'DELETE' });
+}
+
+// ── Orders ────────────────────────────────────────────────────────────────────
+export async function createOrder(orderData) {
+  const res = await fetch(`${BASE}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData),
+  });
+  return res.json();
+}
+
+export async function getUserOrders(uid) {
+  const res = await fetch(`${BASE}/orders/${uid}`);
+  return res.json();
+}
