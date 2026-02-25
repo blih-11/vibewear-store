@@ -60,7 +60,7 @@ export default function Products() {
 
   return (
     <div className="bg-brand-bg min-h-screen pt-8 pb-20">
-      <div className="max-w-7xl mx-auto mt-10 px-4">
+      <div className="max-w-7xl mx-auto mt-10  px-4">
         <div className="mb-8">
           {/* <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-0.5 bg-white" />
