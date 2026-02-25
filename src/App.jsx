@@ -21,6 +21,7 @@ import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Auth from './pages/Auth';
 import Orders from './pages/Orders';
+import { trackActivity } from './lib/api';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -28,9 +29,30 @@ function ScrollToTop() {
   return null;
 }
 
+// Get or create a persistent anonymous guest ID
+function getGuestId() {
+  let id = localStorage.getItem('vw_guest_id');
+  if (!id) {
+    id = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    localStorage.setItem('vw_guest_id', id);
+  }
+  return id;
+}
+
 function AppContent() {
   const { user, loading } = useAuth();
   const [isGuest, setIsGuest] = useState(() => sessionStorage.getItem('vw_guest') !== 'false');
+
+  // Track visit — logged-in user or guest
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      trackActivity(user);
+    } else if (isGuest) {
+      const guestId = getGuestId();
+      trackActivity({ uid: guestId, email: null, displayName: 'Guest' });
+    }
+  }, [user, loading, isGuest]);
 
   if (loading) return (
     <div className="min-h-screen bg-[#080808] flex items-center justify-center">

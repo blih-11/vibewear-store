@@ -9,10 +9,12 @@ export default function Footer() {
         alignItems: 'center', justifyContent: 'space-between',
         gap: '1rem',
       }}>
+        {/* Copyright */}
         <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.7rem', fontFamily: 'var(--font-mono)', letterSpacing: '0.06em' }}>
           © 2026 VIBE WEAR. All rights reserved.
         </p>
 
+        {/* Links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           {['Privacy Policy', 'Terms of Service', 'Cookies'].map(item => (
             <a key={item} href="#"
@@ -24,6 +26,7 @@ export default function Footer() {
             </a>
           ))}
 
+          {/* Instagram */}
           <a href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer"
             style={{ color: 'rgba(255,255,255,0.3)', display: 'flex', alignItems: 'center', transition: 'color 0.2s' }}
             onMouseEnter={e => e.currentTarget.style.color = '#fff'}
