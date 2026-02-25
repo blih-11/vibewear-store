@@ -60,12 +60,12 @@ export default function Products() {
 
   return (
     <div className="bg-brand-bg min-h-screen pt-8 pb-20">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto mt-10 px-4">
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
+          {/* <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-0.5 bg-white" />
             <span className="text-white text-xs font-semibold uppercase tracking-widest">Catalogue</span>
-          </div>
+          </div> */}
           <h1 className="text-brand-cream text-3xl md:text-4xl font-bold">All Products</h1>
         </div>
 
