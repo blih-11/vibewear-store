@@ -202,8 +202,8 @@ export default function Home() {
               All Locations <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
-          <div className="relative rounded-xl overflow-hidden aspect-square">
-            <img src="/images/products/img_22.jpg" alt="VIBE WEAR Store" className="w-full h-full object-cover" />
+          <div className="relative   rounded-xl overflow-hidden aspect-square">
+            <img src="/images/products/img_22.jpg" alt="VIBE WEAR Store" className="w-full h-90 object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
             <div className="absolute bottom-5 left-5">
               <p className="text-white/60 text-xs uppercase tracking-widest">Lagos Flagship</p>

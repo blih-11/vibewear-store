@@ -43,7 +43,7 @@ export default function About() {
           </div>
           <div className="   gap-3">
             <div className="rounded-xl overflow-hidden   ">
-              <img src="/images/VIBE.png" alt="" className="w-full h-full object-cover" />
+              <img src="/images/VIBE.jpg" alt="" className="w-full h-full object-cover" />
             </div>
              
           </div>
