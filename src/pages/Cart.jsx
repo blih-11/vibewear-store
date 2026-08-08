@@ -9,110 +9,109 @@ export default function Cart() {
   const shipping = cartTotal >= 200 ? 0 : 10;
   const grandTotal = cartTotal + shipping;
 
-  const handleCheckout = () => {
-    if (cartItems.length === 0) return;
-    navigate('/checkout');
-  };
-
   return (
-    <div className="bg-brand-bg min-h-screen">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12">
-        <div className="mb-8 mt-5">
-          {/* <span className="text-white text-xs font-semibold uppercase tracking-widest">Review</span> */}
-          <h1 className="text-brand-cream text-3xl md:text-4xl font-bold mt-1">Your Cart</h1>
-        </div>
+    <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '2.5rem 1.5rem' }}>
+        <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#000', marginBottom: '2rem' }}>Your Cart</h1>
 
         {cartItems.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-5 text-center">
-            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center">
-              <svg className="w-8 h-8 text-brand-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
+          <div style={{ textAlign: 'center', padding: '5rem 0' }}>
+            <div style={{ width: '64px', height: '64px', border: '1.5px solid #e5e5e5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1.5rem' }}>
+              <svg width="24" height="24" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
             </div>
-            <div>
-              <h3 className="text-brand-cream font-bold text-xl mb-1">Your cart is empty</h3>
-              <p className="text-brand-muted text-sm">Start exploring our collection</p>
-            </div>
-            <button onClick={() => navigate('/products')} className="bg-black text-white border border-white/20 font-semibold px-8 py-3 rounded-xl hover:bg-white hover:text-black transition-all">
+            <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '6px' }}>Your cart is empty</h3>
+            <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1.5rem' }}>Start exploring our collection</p>
+            <button onClick={() => navigate('/products')}
+              style={{ background: '#000', color: '#fff', border: 'none', padding: '12px 28px', fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '2px' }}>
               Browse Products
             </button>
           </div>
         ) : (
-          <div className="grid lg:grid-cols-[1fr_360px] gap-10">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '3rem', alignItems: 'start' }} className="cart-grid">
+
             {/* Items */}
-            <div className="space-y-4">
+            <div>
               {cartItems.map(item => (
-                <div key={item.key} className="flex gap-4 p-4 bg-white/3 border border-white/7 rounded-2xl">
-                  <img src={item.image} alt={item.name} onClick={() => navigate(`/products/${item.id}`)}
-                    className="w-20 h-24 object-cover rounded-xl cursor-pointer hover:opacity-80 transition-opacity flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="text-brand-cream font-medium text-sm leading-snug cursor-pointer hover:text-white transition-colors" onClick={() => navigate(`/products/${item.id}`)}>
+                <div key={item.key} style={{ display: 'flex', gap: '16px', padding: '16px 0', borderBottom: '1px solid #f0f0f0' }}>
+                  <img src={item.image} alt={item.name}
+                    onClick={() => navigate(`/products/${item.id}`)}
+                    style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '2px', cursor: 'pointer', background: '#f5f5f5', flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '0.88rem', color: '#000', marginBottom: '4px', cursor: 'pointer' }}
+                      onClick={() => navigate(`/products/${item.id}`)}>
                       {item.name}
                     </h4>
-                    <p className="text-brand-muted text-xs mt-0.5">{item.size} · {item.color}</p>
-                    <p className="text-brand-cream font-bold mt-1">{formatPrice(item.price)}</p>
-                    <div className="flex items-center gap-2 mt-3">
-                      <button onClick={() => updateQuantity(item.key, item.quantity - 1)} className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center text-brand-cream hover:border-white/50 text-sm">−</button>
-                      <span className="text-brand-cream text-sm w-5 text-center font-medium">{item.quantity}</span>
-                      <button onClick={() => updateQuantity(item.key, item.quantity + 1)} className="w-8 h-8 rounded-full border border-white/15 flex items-center justify-center text-brand-cream hover:border-white/50 text-sm">+</button>
-                      <button onClick={() => removeFromCart(item.key)} className="ml-auto text-brand-muted hover:text-red-400 transition-colors">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <p style={{ color: '#aaa', fontSize: '0.78rem', marginBottom: '6px' }}>{item.size} · {item.color}</p>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{formatPrice(item.price)}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+                      <button onClick={() => updateQuantity(item.key, item.quantity - 1)}
+                        style={{ width: '30px', height: '30px', border: '1px solid #e5e5e5', background: '#fff', borderRadius: '2px', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>−</button>
+                      <span style={{ fontSize: '0.88rem', fontWeight: 600, minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                        style={{ width: '30px', height: '30px', border: '1px solid #e5e5e5', background: '#fff', borderRadius: '2px', cursor: 'pointer', fontSize: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      <button onClick={() => removeFromCart(item.key)}
+                        style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#ccc', padding: '4px' }}
+                        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                        onMouseLeave={e => e.currentTarget.style.color = '#ccc'}>
+                        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
                   </div>
-                  <div className="hidden sm:block text-right flex-shrink-0">
-                    <p className="text-brand-cream font-bold">{formatPrice(item.price * item.quantity)}</p>
-                    {item.quantity > 1 && <p className="text-brand-muted text-xs">{formatPrice(item.price)} each</p>}
+                  <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                    <p style={{ fontWeight: 700, fontSize: '0.9rem' }}>{formatPrice(item.price * item.quantity)}</p>
                   </div>
                 </div>
               ))}
-              <button onClick={clearCart} className="flex items-center gap-1.5 text-brand-muted hover:text-red-400 transition-colors text-xs mt-2">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7M4 7h16" /></svg>
+              <button onClick={clearCart}
+                style={{ marginTop: '12px', background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '6px' }}
+                onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+                onMouseLeave={e => e.currentTarget.style.color = '#aaa'}>
+                <svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7M4 7h16" /></svg>
                 Clear Cart
               </button>
             </div>
 
             {/* Summary */}
-            <div className="self-start lg:sticky lg:top-24">
-              <div className="bg-white/4 border border-white/8 rounded-2xl p-6">
-                <h2 className="text-brand-cream font-bold text-lg mb-5">Order Summary</h2>
-                <div className="space-y-3 mb-5">
-                  <div className="flex justify-between">
-                    <span className="text-brand-muted text-sm">Subtotal ({cartItems.reduce((s, i) => s + i.quantity, 0)} items)</span>
-                    <span className="text-brand-cream font-medium text-sm">{formatPrice(cartTotal)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-brand-muted text-sm">Shipping</span>
-                    <span className={`text-sm font-medium ${shipping === 0 ? 'text-green-400' : 'text-brand-cream'}`}>
-                      {shipping === 0 ? 'FREE' : formatPrice(shipping)}
-                    </span>
-                  </div>
-                </div>
-                <div className="border-t border-white/8 pt-4 mb-5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-brand-cream font-semibold">Total</span>
-                    <span className="text-brand-cream font-black text-2xl">{formatPrice(grandTotal)}</span>
-                  </div>
-                </div>
-                <button onClick={handleCheckout} className="w-full bg-white text-black font-bold py-4 rounded-xl flex items-center justify-center gap-3 hover:bg-brand-cream transition-colors mb-3">
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
-                  Proceed to Checkout
-                </button>
-                <p className="text-brand-muted text-xs text-center mb-4">Pay securely with card or bank transfer via Flutterwave.</p>
-                <button onClick={() => navigate('/products')} className="w-full border border-white/12 text-brand-muted text-sm py-3 rounded-xl hover:border-white/30 hover:text-brand-cream transition-all">
-                  Continue Shopping
-                </button>
+            <div style={{ border: '1px solid #f0f0f0', borderRadius: '4px', padding: '1.5rem', position: 'sticky', top: '80px' }}>
+              <h2 style={{ fontWeight: 700, fontSize: '1rem', letterSpacing: '0.06em', marginBottom: '1.25rem' }}>Order Summary</h2>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
+                <span style={{ color: '#888', fontSize: '0.85rem' }}>Subtotal</span>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{formatPrice(cartTotal)}</span>
               </div>
-              <div className="mt-4 space-y-2.5">
-                {[['🔒', 'Secure Checkout', 'Your data is protected'], ['📦', 'Fast Delivery', '3–7 business days'], ['↩️', 'Easy Returns', '30-day return policy']].map(([icon, label, sub]) => (
-                  <div key={label} className="flex items-center gap-3 text-brand-muted">
-                    <span className="text-lg">{icon}</span>
-                    <div><p className="text-brand-cream text-xs font-medium">{label}</p><p className="text-xs">{sub}</p></div>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <span style={{ color: '#888', fontSize: '0.85rem' }}>Shipping</span>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem', color: shipping === 0 ? '#22c55e' : '#000' }}>
+                  {shipping === 0 ? 'FREE' : formatPrice(shipping)}
+                </span>
               </div>
+              <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Total</span>
+                <span style={{ fontWeight: 800, fontSize: '1.3rem' }}>{formatPrice(grandTotal)}</span>
+              </div>
+              <button onClick={() => navigate('/checkout')}
+                style={{ width: '100%', background: '#000', color: '#fff', border: 'none', padding: '14px', fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', borderRadius: '2px', marginBottom: '10px', transition: 'opacity 0.2s' }}
+                onMouseEnter={e => e.target.style.opacity = '0.85'}
+                onMouseLeave={e => e.target.style.opacity = '1'}>
+                Proceed to Checkout
+              </button>
+              <button onClick={() => navigate('/products')}
+                style={{ width: '100%', background: '#fff', color: '#555', border: '1px solid #e5e5e5', padding: '12px', fontSize: '0.78rem', fontWeight: 600, cursor: 'pointer', borderRadius: '2px', transition: 'border-color 0.2s' }}
+                onMouseEnter={e => e.target.style.borderColor = '#000'}
+                onMouseLeave={e => e.target.style.borderColor = '#e5e5e5'}>
+                Continue Shopping
+              </button>
+              <p style={{ color: '#aaa', fontSize: '0.72rem', textAlign: 'center', marginTop: '10px' }}>
+                Secure checkout via Flutterwave
+              </p>
             </div>
           </div>
         )}
       </div>
+      <style>{`
+        @media(max-width: 767px) {
+          .cart-grid { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 }
