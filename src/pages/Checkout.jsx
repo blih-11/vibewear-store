@@ -29,11 +29,7 @@ function loadFlutterwaveScript() {
 
 // ── Changed: border colors now use solid dark tones instead of white/10
 const iStyle = (err) =>
-<<<<<<< HEAD
   `w-full bg-gray-100 border ${err ? 'border-red-400' : 'border-gray-400'} rounded-xl px-4 py-3.5 text-brand-cream text-sm placeholder-gray-400 focus:outline-none focus:border-gray-200 focus:bg-gray-100 transition-all`;
-=======
-  `w-full bg-white/5 border ${err ? 'border-red-400' : 'border-gray-400'} rounded-xl px-4 py-3.5 text-brand-cream text-sm placeholder-white/25 focus:outline-none focus:border-gray-200 focus:bg-white/7 transition-all`;
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
 
 function Field({ label, hint, required, error, children }) {
   return (
@@ -42,11 +38,7 @@ function Field({ label, hint, required, error, children }) {
         <label className="text-brand-cream text-[11px] font-bold uppercase tracking-widest">
           {label}{required && <span className="text-red-400 ml-0.5">*</span>}
         </label>
-<<<<<<< HEAD
         {hint && !error && <span className="text-brand-muted text-[11px] normal-case">{hint}</span>}
-=======
-        {hint && !error && <span className="text-white/50 text-[11px] normal-case">{hint}</span>}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
       </div>
       {children}
       {error && (
@@ -64,21 +56,12 @@ function Field({ label, hint, required, error, children }) {
 function SectionCard({ icon, title, subtitle, children }) {
   return (
     // ── Changed: border-white/[0.07] → border-gray-300
-<<<<<<< HEAD
     <div className="bg-gray-100 border border-gray-300 rounded-2xl overflow-hidden">
       <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-300">
         <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center shrink-0 text-sm">{icon}</div>
         <div>
           <p className="text-brand-cream font-bold text-sm">{title}</p>
           {subtitle && <p className="text-brand-muted text-xs mt-0.5">{subtitle}</p>}
-=======
-    <div className="bg-white/[0.03] border border-gray-300 rounded-2xl overflow-hidden">
-      <div className="flex items-center gap-3 px-6 py-4 border-b border-gray-300">
-        <div className="w-8 h-8 rounded-full bg-white/[0.07] flex items-center justify-center shrink-0 text-sm">{icon}</div>
-        <div>
-          <p className="text-brand-cream font-bold text-sm">{title}</p>
-          {subtitle && <p className="text-white/50 text-xs mt-0.5">{subtitle}</p>}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
         </div>
       </div>
       <div className="p-6">{children}</div>
@@ -258,17 +241,10 @@ export default function Checkout() {
 
   const Summary = () => (
     <div className="self-start lg:sticky lg:top-24 space-y-4">
-<<<<<<< HEAD
       <div className="bg-gray-100 border border-gray-300 rounded-2xl overflow-hidden">
         <div className="px-5 py-4 border-b border-gray-300">
           <p className="text-brand-cream font-bold">Order Summary</p>
           <p className="text-brand-muted text-xs mt-0.5">{itemCount} item{itemCount !== 1 ? 's' : ''}</p>
-=======
-      <div className="bg-white/[0.04] border border-gray-300 rounded-2xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-300">
-          <p className="text-brand-cream font-bold">Order Summary</p>
-          <p className="text-white/50 text-xs mt-0.5">{itemCount} item{itemCount !== 1 ? 's' : ''}</p>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
         </div>
         <div className="px-5 py-4 space-y-3 border-b border-gray-300">
           {cartItems.map(item => (
@@ -279,11 +255,7 @@ export default function Checkout() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-brand-cream text-xs font-medium line-clamp-1">{item.name}</p>
-<<<<<<< HEAD
                 <p className="text-brand-muted text-[11px] mt-0.5">{item.size} · {item.color}</p>
-=======
-                <p className="text-white/50 text-[11px] mt-0.5">{item.size} · {item.color}</p>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
               </div>
               <p className="text-brand-cream text-xs font-semibold shrink-0">{formatPrice(item.price * item.quantity)}</p>
             </div>
@@ -292,25 +264,15 @@ export default function Checkout() {
         <div className="px-5 py-4 space-y-3 text-sm">
           <div className="flex justify-between">
             <div>
-<<<<<<< HEAD
               <p className="text-brand-muted">Items subtotal</p>
               <p className="text-brand-muted text-xs">{itemCount} item{itemCount !== 1 ? 's' : ''}, before shipping</p>
-=======
-              <p className="text-white/50">Items subtotal</p>
-              <p className="text-white/40 text-xs">{itemCount} item{itemCount !== 1 ? 's' : ''}, before shipping</p>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
             </div>
             <p className="text-brand-cream font-medium shrink-0">{formatPrice(cartTotal)}</p>
           </div>
           <div className="flex justify-between">
             <div>
-<<<<<<< HEAD
               <p className={shippingFee === 0 ? 'text-emerald-400' : 'text-brand-muted'}>Shipping & Handling</p>
               <p className="text-brand-muted text-xs">
-=======
-              <p className={shippingFee === 0 ? 'text-emerald-400' : 'text-white/50'}>Shipping & Handling</p>
-              <p className="text-white/40 text-xs">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                 {shippingFee === 0 ? `Free over ${formatPrice(200)}` : 'Standard international'}
               </p>
             </div>
@@ -321,22 +283,14 @@ export default function Checkout() {
           <div className="pt-3 border-t border-gray-400 flex justify-between items-start">
             <div>
               <p className="text-brand-cream font-bold text-base">Total</p>
-<<<<<<< HEAD
               <p className="text-brand-muted text-xs">{currentCurrency.name} · {currentCurrency.code}</p>
-=======
-              <p className="text-white/40 text-xs">{currentCurrency.name} · {currentCurrency.code}</p>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
             </div>
             <p className="text-brand-cream font-black text-xl shrink-0">{formatPrice(grandTotal)}</p>
           </div>
         </div>
       </div>
 
-<<<<<<< HEAD
       <div className="bg-gray-100 border border-gray-300 rounded-2xl px-5 py-4 space-y-3">
-=======
-      <div className="bg-white/[0.03] border border-gray-300 rounded-2xl px-5 py-4 space-y-3">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
         {[
           ['🔒','Secure Payment','256-bit SSL · Flutterwave'],
           ['📦','Worldwide Delivery','5–14 business days'],
@@ -347,11 +301,7 @@ export default function Checkout() {
             <span className="text-sm mt-0.5 shrink-0">{icon}</span>
             <div>
               <p className="text-brand-cream text-xs font-semibold">{title}</p>
-<<<<<<< HEAD
               <p className="text-brand-muted text-xs">{desc}</p>
-=======
-              <p className="text-white/50 text-xs">{desc}</p>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
             </div>
           </div>
         ))}
@@ -396,34 +346,20 @@ export default function Checkout() {
                     <div>
                       <p className="text-emerald-400 text-xs font-semibold">Signed in</p>
                       <p className="text-brand-cream text-sm font-medium">{user.displayName || user.email}</p>
-<<<<<<< HEAD
                       {user.displayName && <p className="text-brand-muted text-xs">{user.email}</p>}
-=======
-                      {user.displayName && <p className="text-white/50 text-xs">{user.email}</p>}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                     </div>
                   </div>
                   <button
                     onClick={() => { logout(); navigate('/auth?redirect=checkout'); }}
-<<<<<<< HEAD
                     className="text-brand-muted hover:text-brand-cream text-xs underline underline-offset-2 transition-colors shrink-0"
-=======
-                    className="text-white/40 hover:text-white/70 text-xs underline underline-offset-2 transition-colors shrink-0"
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                   >
                     Sign out
                   </button>
                 </div>
               ) : (
-<<<<<<< HEAD
                 <div className="bg-gray-100 border border-gray-300 rounded-2xl p-5">
                   <p className="text-brand-cream font-bold text-sm mb-1">Sign in to checkout faster</p>
                   <p className="text-brand-muted text-xs mb-4">
-=======
-                <div className="bg-white/[0.03] border border-gray-300 rounded-2xl p-5">
-                  <p className="text-brand-cream font-bold text-sm mb-1">Sign in to checkout faster</p>
-                  <p className="text-white/50 text-xs mb-4">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                     Your details will be saved for next time. No need to re-enter them.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
@@ -435,11 +371,7 @@ export default function Checkout() {
                     </Link>
                     <button
                       onClick={() => { if (validate()) { setStep(2); window.scrollTo({ top: 0, behavior: 'smooth' }); } }}
-<<<<<<< HEAD
                       className="flex-1 border border-gray-400 text-brand-muted py-3 rounded-xl text-sm hover:border-gray-200 hover:text-brand-cream transition-all"
-=======
-                      className="flex-1 border border-gray-400 text-white/60 py-3 rounded-xl text-sm hover:border-gray-200 hover:text-white/80 transition-all"
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                     >
                       Continue as guest
                     </button>
@@ -468,15 +400,9 @@ export default function Checkout() {
                   </Field>
                 </div>
                 {user && (
-<<<<<<< HEAD
                   <p className="text-brand-muted text-[11px] mt-3 flex items-center gap-1">
                     <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
                     Order confirmation will be sent to <span className="text-brand-muted ml-0.5">{user.email}</span>
-=======
-                  <p className="text-white/40 text-[11px] mt-3 flex items-center gap-1">
-                    <svg className="w-3 h-3 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-                    Order confirmation will be sent to <span className="text-white/60 ml-0.5">{user.email}</span>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                   </p>
                 )}
               </SectionCard>
@@ -543,15 +469,9 @@ export default function Checkout() {
             <div className="space-y-5">
 
               {user && (
-<<<<<<< HEAD
                 <div className="flex items-center gap-2 text-xs text-brand-muted bg-gray-100 border border-gray-300 rounded-xl px-4 py-2.5">
                   {user.photoURL && !photoError
                     ? <img src={user.photoURL} alt="" referrerPolicy="no-referrer" onError={() => setPhotoError(true)} className="w-5 h-5 rounded-full"/>
-=======
-                <div className="flex items-center gap-2 text-xs text-white/50 bg-white/[0.03] border border-gray-300 rounded-xl px-4 py-2.5">
-                  {user.photoURL
-                    ? <img src={user.photoURL} alt="" className="w-5 h-5 rounded-full"/>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                     : <div className="w-5 h-5 rounded-full bg-emerald-500/30 flex items-center justify-center text-emerald-400 text-[10px] font-bold">{(user.displayName || user.email)[0].toUpperCase()}</div>
                   }
                   <span>Paying as</span>
@@ -559,20 +479,12 @@ export default function Checkout() {
                 </div>
               )}
 
-<<<<<<< HEAD
               <div className="bg-gray-100 border border-gray-300 rounded-2xl p-5">
-=======
-              <div className="bg-white/[0.03] border border-gray-300 rounded-2xl p-5">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                 <div className="flex items-center justify-between mb-4">
                   <p className="text-brand-cream font-bold text-sm">📦 Delivering To</p>
                   <button
                     onClick={() => { setStep(1); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
-<<<<<<< HEAD
                     className="text-[11px] text-brand-muted hover:text-brand-cream underline underline-offset-2 transition-colors flex items-center gap-1">
-=======
-                    className="text-[11px] text-white/40 hover:text-brand-cream underline underline-offset-2 transition-colors flex items-center gap-1">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                     <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                     Edit
                   </button>
@@ -580,13 +492,8 @@ export default function Checkout() {
                 <div className="grid sm:grid-cols-2 gap-x-8 gap-y-1 text-sm">
                   <div className="space-y-0.5">
                     <p className="text-brand-cream font-semibold">{form.firstName} {form.lastName}</p>
-<<<<<<< HEAD
                     <p className="text-brand-muted text-xs">{form.phone}</p>
                     {user && <p className="text-brand-muted text-xs">{user.email}</p>}
-=======
-                    <p className="text-white/50 text-xs">{form.phone}</p>
-                    {user && <p className="text-white/50 text-xs">{user.email}</p>}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                   </div>
                   <div className="space-y-0.5 mt-2 sm:mt-0">
                     <p className="text-brand-cream text-xs">{form.address}{form.address2 ? `, ${form.address2}` : ''}</p>
@@ -595,19 +502,11 @@ export default function Checkout() {
                   </div>
                 </div>
                 {form.notes && (
-<<<<<<< HEAD
                   <p className="text-brand-muted text-xs italic mt-3 pt-3 border-t border-gray-400">📝 "{form.notes}"</p>
                 )}
               </div>
 
               <div className="bg-gray-100 border border-gray-300 rounded-2xl p-5">
-=======
-                  <p className="text-white/40 text-xs italic mt-3 pt-3 border-t border-gray-400">📝 "{form.notes}"</p>
-                )}
-              </div>
-
-              <div className="bg-white/[0.03] border border-gray-300 rounded-2xl p-5">
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                 <p className="text-brand-cream font-bold text-sm mb-4">🛍️ Your Items ({itemCount})</p>
                 <div className="space-y-4">
                   {cartItems.map(item => (
@@ -615,28 +514,18 @@ export default function Checkout() {
                       <img src={item.image} alt={item.name} className="w-14 h-[68px] object-cover rounded-xl shrink-0"/>
                       <div className="flex-1 min-w-0">
                         <p className="text-brand-cream text-sm font-medium line-clamp-1">{item.name}</p>
-<<<<<<< HEAD
                         <p className="text-brand-muted text-xs mt-0.5">{item.size} · {item.color}</p>
                         <p className="text-brand-muted text-xs">Qty: {item.quantity}</p>
                       </div>
                       <div className="text-right shrink-0">
                         <p className="text-brand-cream font-semibold text-sm">{formatPrice(item.price * item.quantity)}</p>
                         {item.quantity > 1 && <p className="text-brand-muted text-xs">{formatPrice(item.price)} each</p>}
-=======
-                        <p className="text-white/50 text-xs mt-0.5">{item.size} · {item.color}</p>
-                        <p className="text-white/50 text-xs">Qty: {item.quantity}</p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-brand-cream font-semibold text-sm">{formatPrice(item.price * item.quantity)}</p>
-                        {item.quantity > 1 && <p className="text-white/40 text-xs">{formatPrice(item.price)} each</p>}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
 
-<<<<<<< HEAD
               <div className="bg-gray-100 border border-gray-300 rounded-2xl p-5">
                 <p className="text-brand-cream font-bold text-sm mb-1">💳 Choose How to Order</p>
                 <p className="text-brand-muted text-xs mb-5">
@@ -664,15 +553,6 @@ export default function Checkout() {
                       <span key={m} className="bg-gray-100 border border-gray-400 rounded-lg px-3 py-1.5 text-xs text-brand-muted">{m}</span>
                     ))}
                   </div>
-=======
-              <div className="bg-white/[0.03] border border-gray-300 rounded-2xl p-5">
-                <p className="text-brand-cream font-bold text-sm mb-1">💳 Choose How to Pay</p>
-                <p className="text-white/50 text-xs mb-5">Payments are encrypted. We never store your card details.</p>
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {['💳 Visa','💳 Mastercard','🏦 Bank Transfer'].map(m => (
-                    <span key={m} className="bg-white/[0.04] border border-gray-400 rounded-lg px-3 py-1.5 text-xs text-white/50">{m}</span>
-                  ))}
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                 </div>
 
                 <div className="flex items-center gap-3 mb-5">
@@ -693,7 +573,6 @@ export default function Checkout() {
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
                       </svg>
-<<<<<<< HEAD
                     )}
                     {loadingChannel === 'whatsapp' ? 'Creating order…' : 'Order via WhatsApp'}
                   </button>
@@ -715,35 +594,6 @@ export default function Checkout() {
                 </div>
                 <p className="text-gray-400 text-[11px] text-center mt-3">
                   We'll open WhatsApp or Instagram with your Order ID ready to send — we'll confirm and arrange payment manually.
-=======
-                      Pay {formatPrice(grandTotal)} — Secure Checkout
-                    </>
-                  )}
-                </button>
-                <p className="text-white/30 text-[11px] text-center mt-2 flex items-center justify-center gap-1">
-                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" strokeWidth="2"/>
-                    <path d="M7 11V7a5 5 0 0110 0v4" strokeWidth="2"/>
-                  </svg>
-                  256-bit SSL · Powered by Flutterwave
-                </p>
-
-                <div className="flex items-center gap-3 my-5">
-                  <div className="flex-1 h-px bg-gray-400"/>
-                  <span className="text-white/40 text-xs">or prefer to order manually?</span>
-                  <div className="flex-1 h-px bg-gray-400"/>
-                </div>
-
-                <button onClick={handleWhatsApp}
-                  className="w-full bg-[#25D366]/[0.08] border border-[#25D366]/50 text-[#25D366] font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#25D366]/[0.14] transition-colors">
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
-                  </svg>
-                  Order via WhatsApp Instead
-                </button>
-                <p className="text-white/30 text-[11px] text-center mt-2">
-                  Send your order on WhatsApp — we'll confirm and arrange payment manually
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
                 </p>
               </div>
             </div>

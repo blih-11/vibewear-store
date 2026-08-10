@@ -4,7 +4,6 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
-<<<<<<< HEAD
 import InstagramEmbed from '../components/InstagramEmbed';
 import { heroSlides, products as localProducts, igSliderImages } from '../data/products';
 import { fetchProducts, fetchInstagramPosts } from '../lib/api';
@@ -129,25 +128,6 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
     </div>
   );
 }
-=======
-import { heroSlides, products as localProducts, igSliderImages } from '../data/products';
-import { fetchProducts } from '../lib/api';
-
-const CATEGORIES = [
-  { id: 'all',         label: 'All' },
-  { id: 'tees',        label: 'Tees' },
-  { id: 'shirts',      label: 'Shirts' },
-  { id: 'hoodies',     label: 'Hoodies' },
-  { id: 'bottoms',     label: 'Bottoms' },
-  { id: 'outerwear',   label: 'Outerwear' },
-  { id: 'accessories', label: 'Accessories' },
-  { id: 'fullfit',     label: 'Full Fits' },
-];
-
-const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
-
-const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
 
 export default function Home() {
   const navigate = useNavigate();
@@ -155,13 +135,7 @@ export default function Home() {
   const [serverLoaded, setServerLoaded] = useState(false);
   const [activeFilter, setActiveFilter] = useState('all');
 
-<<<<<<< HEAD
   const [igPosts, setIgPosts] = useState([]); // real posts added via the admin panel
-=======
-  const [igIndex, setIgIndex] = useState(0);
-  const igSliderRef = useRef(null);
-  const igDragRef = useRef({ startX: 0, dragging: false });
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
 
   useEffect(() => {
     fetchProducts()
@@ -175,16 +149,9 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-<<<<<<< HEAD
     fetchInstagramPosts()
       .then(data => { if (data.success) setIgPosts(data.posts || []); })
       .catch(() => {}); // fall back to the static placeholder grid below
-=======
-    const timer = setInterval(() => {
-      setIgIndex(i => (i + 1) % igSliderImages.length);
-    }, 3200);
-    return () => clearInterval(timer);
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
   }, []);
 
   const filtered = activeFilter === 'all'
@@ -339,7 +306,6 @@ export default function Home() {
             </a>
           </div>
 
-<<<<<<< HEAD
           {(() => {
             const hasRealPosts = igPosts.length > 0;
             const igItems = hasRealPosts ? igPosts : IG_GRID_DESKTOP;
@@ -368,74 +334,6 @@ export default function Home() {
               </>
             );
           })()}
-=======
-          {/* Desktop: 6-column grid */}
-          <div className="ig-desktop-grid">
-            {IG_GRID_DESKTOP.map((src, i) => (
-              <a key={i} href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer"
-                style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden', display: 'block', background: '#f5f5f5' }}>
-                <img src={src} alt={`Instagram ${i + 1}`}
-                  style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply', transition: 'transform 0.4s ease' }}
-                  onMouseEnter={e => { e.target.style.transform = 'scale(1.06)'; }}
-                  onMouseLeave={e => { e.target.style.transform = 'scale(1)'; }}
-                />
-                <div style={{
-                  position: 'absolute', inset: 0, background: 'rgba(0,0,0,0)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  transition: 'background 0.3s',
-                }}
-                  onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,0,0,0.3)'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,0,0,0)'; }}>
-                </div>
-              </a>
-            ))}
-          </div>
-
-          {/* Mobile: full-width 1-at-a-time slider */}
-          <div className="ig-mobile-slider" style={{ overflow: 'hidden' }}>
-  <div
-    ref={igSliderRef}
-    style={{
-                display: 'flex',
-                transform: `translateX(calc(-${igIndex * 100}%))`,
-                transition: 'transform 0.45s cubic-bezier(0.4,0,0.2,1)',
-              }}
-            >
-              {igSliderImages.map((src, i) => (
-                <a key={i} href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer"
-                  style={{
-                    flexShrink: 0,
-                    width: '100%',
-                    aspectRatio: '1',
-                    overflow: 'hidden',
-                    display: 'block',
-                    background: '#f5f5f5',
-                  }}>
-                  <img src={src} alt={`Instagram ${i + 1}`}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }}
-                  />
-                </a>
-              ))}
-            </div>
-            {/* Dots */}
-            <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginTop: '14px' }}>
-              {igSliderImages.map((_, i) => (
-                <button key={i} onClick={() => setIgIndex(i)}
-                  style={{
-                    width: i === igIndex ? '20px' : '6px',
-                    height: '6px',
-                    borderRadius: '3px',
-                    border: 'none',
-                    background: i === igIndex ? '#000' : '#ccc',
-                    cursor: 'pointer',
-                    padding: 0,
-                    transition: 'all 0.3s ease',
-                  }}
-                />
-              ))}
-            </div>
-          </div>
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
 
           <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
             <a href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer" className="btn-outline"
@@ -466,17 +364,8 @@ export default function Home() {
           visibility: hidden;
         }
 
-<<<<<<< HEAD
         /* IG — IgSlider handles its own per-page grid layout inline; these just toggle visibility */
         .ig-desktop-grid { display: block; }
-=======
-        /* IG */
-        .ig-desktop-grid {
-          display: grid;
-          grid-template-columns: repeat(6, 1fr);
-          gap: 4px;
-        }
->>>>>>> 6f06d128cbb81cd08b3059016dc10c5fd55453bb
         .ig-mobile-slider { display: none; }
 
         @media (max-width: 1024px) {

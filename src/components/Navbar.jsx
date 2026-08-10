@@ -101,7 +101,7 @@ export default function Navbar() {
         <div className="zttw-nav__center">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <img
-              style={{ height: "50px"}}
+              style={{ height: "50px" }}
               src={scrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
               alt="Vibe Wear"
               className="zttw-nav__logo"
