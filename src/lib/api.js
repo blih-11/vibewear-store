@@ -115,3 +115,9 @@ export async function getUserOrders(uid) {
   const res = await fetch(`${BASE}/orders/${uid}`);
   return res.json();
 }
+
+// ── Instagram posts (public) ─────────────────────────────────────────────────
+export async function fetchInstagramPosts() {
+  const res = await fetch(`${BASE}/instagram`);
+  return res.json();
+}

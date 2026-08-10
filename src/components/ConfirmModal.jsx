@@ -6,7 +6,7 @@ export default function ConfirmModal() {
 
   return (
     <div className="fixed inset-0 bg-black/70 z-[80] flex items-center justify-center p-4">
-      <div className="bg-brand-bg border border-white/12 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-slide-up">
+      <div className="bg-brand-bg border border-gray-200 rounded-2xl shadow-2xl max-w-sm w-full p-6 animate-slide-up">
         <div className="flex items-center gap-4 mb-5">
           <img src={confirmItem.product.image} alt={confirmItem.product.name} className="w-16 h-20 object-cover rounded-lg flex-shrink-0" />
           <div>
@@ -17,8 +17,8 @@ export default function ConfirmModal() {
         </div>
         <p className="text-brand-muted text-sm mb-5">Add this item to your cart?</p>
         <div className="flex gap-3">
-          <button onClick={cancelAdd} className="flex-1 border border-white/15 text-brand-cream font-medium py-3 rounded-xl hover:bg-white/5 transition-colors text-sm">Cancel</button>
-          <button onClick={confirmAdd} className="flex-1 bg-black text-white font-semibold py-3 rounded-xl hover:bg-white hover:text-black border border-white/20 transition-all text-sm">Add to Cart</button>
+          <button onClick={cancelAdd} className="flex-1 border border-gray-300 text-brand-cream font-medium py-3 rounded-xl hover:bg-gray-100 transition-colors text-sm">Cancel</button>
+          <button onClick={confirmAdd} className="flex-1 bg-black text-white font-semibold py-3 rounded-xl hover:bg-white hover:text-black border border-gray-300 transition-all text-sm">Add to Cart</button>
         </div>
       </div>
     </div>

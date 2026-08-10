@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import { fetchProducts } from '../lib/api';
 import StarRating from '../components/StarRating';
 import ProductCard from '../components/ProductCard';
+import { products as localProducts } from '../data/products';
+
+const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -23,42 +25,50 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setLoading(true);
-    setSelectedSize(null);
-    setSelectedColor(null);
-    setSelectedImg(0);
+    setSelectedSize(null); setSelectedColor(null); setSelectedImg(0);
 
-    fetch(`http://localhost:4000/api/products/${id}`)
+    const applyProduct = (prod, allProds) => {
+      setProduct(prod);
+      const rel = allProds
+        .filter(p => String(p._id || p.id) !== String(prod._id || prod.id) &&
+          p.category?.some(c => prod.category?.includes(c)))
+        .slice(0, 4);
+      setRelated(rel);
+    };
+
+    fetch(`${BASE}/products/${id}`)
       .then(r => r.json())
       .then(data => {
-        if (data.success) {
-          setProduct(data.product);
-          // Fetch related products
-          return fetch('http://localhost:4000/api/products')
+        if (data.success && data.product) {
+          return fetch(`${BASE}/products`)
             .then(r => r.json())
             .then(all => {
-              if (all.success) {
-                const rel = all.products
-                  .filter(p => p._id !== data.product._id && p.category?.some(c => data.product.category?.includes(c)))
-                  .slice(0, 4);
-                setRelated(rel);
-              }
+              applyProduct(data.product, all.success ? all.products : localProducts);
             });
         }
+        // Server responded but no product — try local
+        const local = localProducts.find(p => String(p.id) === String(id) || String(p._id) === String(id));
+        if (local) applyProduct(local, localProducts);
       })
-      .catch(() => {})
+      .catch(() => {
+        // Server down — use local data
+        const local = localProducts.find(p => String(p.id) === String(id) || String(p._id) === String(id));
+        if (local) applyProduct(local, localProducts);
+      })
       .finally(() => setLoading(false));
   }, [id]);
 
   if (loading) return (
-    <div className="min-h-screen bg-brand-bg flex items-center justify-center">
-      <div className="w-8 h-8 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
+    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '32px', height: '32px', border: '2px solid #f0f0f0', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
   if (!product) return (
-    <div className="min-h-screen bg-brand-bg flex flex-col items-center justify-center gap-4 text-center px-4">
-      <h2 className="text-brand-cream font-bold text-2xl">Product not found</h2>
-      <button onClick={() => navigate('/products')} className="text-white text-sm hover:underline">Browse Products</button>
+    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+      <h2 style={{ fontWeight: 800, fontSize: '1.5rem' }}>Product not found</h2>
+      <button onClick={() => navigate('/products')} style={{ color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}>Browse Products</button>
     </div>
   );
 
@@ -72,31 +82,44 @@ export default function ProductDetail() {
     requestAddToCart(product, selectedSize, selectedColor);
   };
 
-  return (
-    <div className="bg-brand-bg min-h-screen">
-      {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-        <nav className="flex mt-12 items-center gap-2 text-brand-muted text-xs">
-          <button onClick={() => navigate('/')} className="hover:text-brand-cream transition-colors">Home</button>
-          <span>/</span>
-          <button onClick={() => navigate('/products')} className="hover:text-brand-cream transition-colors">Products</button>
-          <span>/</span>
-          <span className="text-brand-cream truncate max-w-[200px]">{product.name}</span>
-        </nav>
-      </div>
+  const btnStyle = (selected, error) => ({
+    padding: '8px 16px', borderRadius: '2px', border: '1px solid',
+    borderColor: error ? '#ef4444' : selected ? '#000' : '#e5e5e5',
+    background: selected ? '#000' : '#fff',
+    color: selected ? '#fff' : '#555',
+    cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
+    transition: 'all 0.15s',
+  });
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid lg:grid-cols-2 gap-10 xl:gap-14">
+  return (
+    <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        {/* Breadcrumb */}
+        <nav style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2rem', fontSize: '0.75rem', color: '#aaa' }}>
+          <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 0 }}
+            onMouseEnter={e => e.target.style.color = '#000'} onMouseLeave={e => e.target.style.color = '#aaa'}>Home</button>
+          <span>/</span>
+          <button onClick={() => navigate('/products')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 0 }}
+            onMouseEnter={e => e.target.style.color = '#000'} onMouseLeave={e => e.target.style.color = '#aaa'}>Shop</button>
+          <span>/</span>
+          <span style={{ color: '#000', fontWeight: 500 }}>{product.name}</span>
+        </nav>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', marginBottom: '5rem' }} className="product-grid">
+
           {/* Images */}
-          <div className="space-y-3">
-            <div className="aspect-[4/5] rounded-xl overflow-hidden bg-white/5">
-              <img src={images[selectedImg] || product.image} alt={product.name} className="w-full h-full object-cover" />
+          <div>
+            <div style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8', marginBottom: '8px' }}>
+              <img src={images[selectedImg] || product.image} alt={product.name}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
             </div>
             {images.length > 1 && (
-              <div className="flex gap-3">
+              <div style={{ display: 'flex', gap: '6px' }}>
                 {images.map((img, i) => (
-                  <button key={i} onClick={() => setSelectedImg(i)} className={`w-20 h-24 rounded-lg overflow-hidden border-2 transition-all ${selectedImg === i ? 'border-white' : 'border-white/10 hover:border-white/30'}`}>
-                    <img src={img} alt="" className="w-full h-full object-cover" />
+                  <button key={i} onClick={() => setSelectedImg(i)}
+                    style={{ width: '72px', height: '88px', overflow: 'hidden', border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8', padding: 0, cursor: 'pointer', borderRadius: '2px' }}>
+                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
               </div>
@@ -105,34 +128,35 @@ export default function ProductDetail() {
 
           {/* Info */}
           <div>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {product.isNew && <span className="bg-white/10 text-white border border-white/20 text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wide">New Arrival</span>}
-              {discount && <span className="bg-white/8 text-brand-cream border border-white/15 text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wide">-{discount}% Off</span>}
-              {!product.inStock && <span className="bg-red-500/10 text-red-400 border border-red-500/20 text-[10px] font-bold px-3 py-1 rounded-md uppercase tracking-wide">Out of Stock</span>}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+              {product.isNew && <span style={{ background: '#000', color: '#fff', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>NEW</span>}
+              {discount && <span style={{ background: '#f5f5f5', color: '#000', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em' }}>-{discount}% OFF</span>}
+              {!product.inStock && <span style={{ background: '#f5f5f5', color: '#888', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em' }}>SOLD OUT</span>}
             </div>
 
-            <h1 className="text-brand-cream text-2xl md:text-3xl font-bold leading-tight mb-3">{product.name}</h1>
-            <div className="mb-4"><StarRating rating={product.rating} reviews={product.reviews} size="md" /></div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#000', lineHeight: 1.2, marginBottom: '10px' }}>{product.name}</h1>
+            <div style={{ marginBottom: '16px' }}><StarRating rating={product.rating} reviews={product.reviews} size="md" /></div>
 
-            <div className="flex items-baseline gap-3 mb-2">
-              <span className="text-brand-cream font-black text-3xl">{formatPrice(product.price)}</span>
-              {product.originalPrice && <span className="text-brand-muted text-lg line-through">${product.originalPrice.toFixed(2)}</span>}
-              {discount && <span className="text-white text-sm font-bold">Save {formatPrice(product.originalPrice - product.price)}</span>}
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '6px' }}>
+              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#000' }}>{formatPrice(product.price)}</span>
+              {product.originalPrice && <span style={{ fontSize: '1rem', color: '#aaa', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>}
             </div>
-            <div className={`text-xs font-semibold uppercase tracking-wider mb-5 ${product.inStock ? 'text-green-400' : 'text-red-400'}`}>
-              {product.inStock ? '● In Stock — Ready to Ship' : '● Out of Stock'}
+            <div style={{ fontSize: '12px', fontWeight: 700, color: product.inStock ? '#22c55e' : '#ef4444', marginBottom: '24px', letterSpacing: '0.06em' }}>
+              {product.inStock ? '● In Stock' : '● Out of Stock'}
             </div>
 
             {/* Color */}
-            <div className="mb-5">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-brand-cream text-sm font-medium">Color {selectedColor && <span className="text-brand-muted font-normal">— {selectedColor}</span>}</label>
-                {colorError && <span className="text-red-400 text-xs">Please select a color</span>}
+            <div style={{ marginBottom: '20px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Color {selectedColor && <span style={{ fontWeight: 400, color: '#888' }}>— {selectedColor}</span>}
+                </label>
+                {colorError && <span style={{ color: '#ef4444', fontSize: '0.72rem' }}>Select a color</span>}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {product.colors?.map(color => (
                   <button key={color} onClick={() => { setSelectedColor(color); setColorError(false); }}
-                    className={`px-4 py-2 rounded-lg border text-sm transition-all duration-200 ${selectedColor === color ? 'border-white bg-white/10 text-white' : 'border-white/15 text-brand-muted hover:border-white/35 hover:text-brand-cream'}`}>
+                    style={btnStyle(selectedColor === color, colorError && !selectedColor)}>
                     {color}
                   </button>
                 ))}
@@ -140,15 +164,17 @@ export default function ProductDetail() {
             </div>
 
             {/* Size */}
-            <div className="mb-7">
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-brand-cream text-sm font-medium">Size {selectedSize && <span className="text-brand-muted font-normal">— {selectedSize}</span>}</label>
-                {sizeError && <span className="text-red-400 text-xs">Please select a size</span>}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <label style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
+                  Size {selectedSize && <span style={{ fontWeight: 400, color: '#888' }}>— {selectedSize}</span>}
+                </label>
+                {sizeError && <span style={{ color: '#ef4444', fontSize: '0.72rem' }}>Select a size</span>}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                 {product.sizes?.map(size => (
                   <button key={size} onClick={() => { setSelectedSize(size); setSizeError(false); }}
-                    className={`min-w-[50px] px-3 py-2 rounded-lg border text-sm transition-all duration-200 font-medium ${selectedSize === size ? 'border-white bg-white/10 text-white' : 'border-white/15 text-brand-muted hover:border-white/35 hover:text-brand-cream'}`}>
+                    style={{ ...btnStyle(selectedSize === size, sizeError && !selectedSize), minWidth: '48px' }}>
                     {size}
                   </button>
                 ))}
@@ -156,37 +182,50 @@ export default function ProductDetail() {
             </div>
 
             {/* Actions */}
-            <div className="flex gap-3 mb-7">
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
               <button onClick={handleAddToCart} disabled={!product.inStock}
-                className="flex-1 bg-black text-white font-semibold py-3.5 px-6 rounded-xl border border-white/20 hover:bg-white hover:text-black transition-all disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+                style={{ flex: 1, background: '#000', color: '#fff', border: 'none', padding: '14px', fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: product.inStock ? 'pointer' : 'not-allowed', borderRadius: '2px', opacity: product.inStock ? 1 : 0.4, transition: 'opacity 0.2s' }}
+                onMouseEnter={e => { if (product.inStock) e.target.style.opacity = '0.85'; }}
+                onMouseLeave={e => { if (product.inStock) e.target.style.opacity = '1'; }}>
                 {product.inStock ? 'Add to Cart' : 'Out of Stock'}
               </button>
-              <button onClick={() => setCartOpen(true)} className="px-6 py-3.5 border border-white/15 text-brand-cream rounded-xl hover:border-white/50 hover:text-white transition-all text-sm font-medium">
+              <button onClick={() => setCartOpen(true)}
+                style={{ padding: '14px 20px', border: '1px solid #e5e5e5', background: '#fff', color: '#555', cursor: 'pointer', borderRadius: '2px', fontSize: '0.82rem', fontWeight: 600, transition: 'border-color 0.2s' }}
+                onMouseEnter={e => e.target.style.borderColor = '#000'}
+                onMouseLeave={e => e.target.style.borderColor = '#e5e5e5'}>
                 View Cart
               </button>
             </div>
 
-            <div className="border-t border-white/8 pt-5">
-              <h3 className="text-brand-cream font-semibold text-sm mb-2">Product Details</h3>
-              <p className="text-brand-muted text-sm leading-relaxed">{product.description}</p>
+            {/* Description */}
+            <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px' }}>
+              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Details</h3>
+              <p style={{ color: '#666', fontSize: '0.85rem', lineHeight: 1.7 }}>{product.description}</p>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {product.tags?.map(tag => (
-                <span key={tag} className="bg-white/5 text-brand-muted text-[11px] px-2.5 py-1 rounded capitalize">{tag}</span>
-              ))}
-            </div>
+            {product.tags?.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '14px' }}>
+                {product.tags.map(tag => (
+                  <span key={tag} style={{ background: '#f5f5f5', color: '#888', fontSize: '10px', padding: '4px 10px', borderRadius: '2px', textTransform: 'capitalize', letterSpacing: '0.06em' }}>{tag}</span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
+        {/* Related */}
         {related.length > 0 && (
-          <div className="mt-16 pt-12 border-t border-white/8">
-            <h2 className="text-brand-cream font-bold text-2xl mb-8">You May Also Like</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '3rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>You May Also Like</h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
               {related.map(p => <ProductCard key={p._id} product={p} />)}
             </div>
           </div>
         )}
       </div>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @media(max-width: 767px) { .product-grid { grid-template-columns: 1fr !important; gap: 2rem !important; } }
+      `}</style>
     </div>
   );
 }

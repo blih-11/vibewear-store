@@ -14,9 +14,7 @@ import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
-import About from './pages/About';
 import Contact from './pages/Contact';
-import FindStore from './pages/FindStore';
 import Checkout from './pages/Checkout';
 import OrderSuccess from './pages/OrderSuccess';
 import Auth from './pages/Auth';
@@ -29,7 +27,6 @@ function ScrollToTop() {
   return null;
 }
 
-// Get or create a persistent anonymous guest ID
 function getGuestId() {
   let id = localStorage.getItem('vw_guest_id');
   if (!id) {
@@ -43,7 +40,6 @@ function AppContent() {
   const { user, loading } = useAuth();
   const [isGuest, setIsGuest] = useState(() => sessionStorage.getItem('vw_guest') !== 'false');
 
-  // Track visit — logged-in user or guest
   useEffect(() => {
     if (loading) return;
     if (user) {
@@ -55,11 +51,9 @@ function AppContent() {
   }, [user, loading, isGuest]);
 
   if (loading) return (
-    <div className="min-h-screen bg-[#080808] flex items-center justify-center">
-      <svg className="w-6 h-6 text-white/30 animate-spin" fill="none" viewBox="0 0 24 24">
-        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-      </svg>
+    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: '24px', height: '24px', border: '2px solid #f0f0f0', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 
@@ -73,10 +67,10 @@ function AppContent() {
   if (user && isGuest) sessionStorage.removeItem('vw_guest');
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <ScrollToTop />
       <Navbar onSignOut={() => { setIsGuest(true); }} />
-      <main className="flex-1">
+      <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/"              element={<Home />} />
           <Route path="/products"      element={<Products />} />
@@ -86,9 +80,7 @@ function AppContent() {
           <Route path="/order-success" element={<OrderSuccess />} />
           <Route path="/auth"          element={<Auth />} />
           <Route path="/orders"        element={<Orders />} />
-          <Route path="/about"         element={<About />} />
           <Route path="/contact"       element={<Contact />} />
-          <Route path="/find-store"    element={<FindStore />} />
           <Route path="*"              element={<Navigate to="/" replace />} />
         </Routes>
       </main>

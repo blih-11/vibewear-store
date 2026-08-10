@@ -32,8 +32,8 @@ export default function Orders() {
   if (!user) return (
     <div className="bg-brand-bg min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <p className="text-white/50 mb-4">Sign in to view your orders</p>
-        <Link to="/auth" className="bg-white text-black font-bold px-6 py-3 rounded-xl text-sm hover:bg-white/90 transition-colors">Sign In</Link>
+        <p className="text-brand-muted mb-4">Sign in to view your orders</p>
+        <Link to="/auth" className="bg-black text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-gray-800 transition-colors">Sign In</Link>
       </div>
     </div>
   );
@@ -43,29 +43,29 @@ export default function Orders() {
       <div className="max-w-3xl mx-auto">
 
         <div className="mb-8">
-          <h1 className="text-white font-black text-3xl">Order History</h1>
-          <p className="text-white/40 text-sm mt-1">{user.email}</p>
+          <h1 className="text-brand-cream font-black text-3xl">Order History</h1>
+          <p className="text-brand-muted text-sm mt-1">{user.email}</p>
         </div>
 
         {loading ? (
           <div className="space-y-4">
             {[1,2,3].map(i => (
-              <div key={i} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-6 animate-pulse">
-                <div className="h-4 bg-white/10 rounded w-1/3 mb-3"/>
-                <div className="h-3 bg-white/5 rounded w-1/2"/>
+              <div key={i} className="bg-gray-100 border border-gray-200 rounded-2xl p-6 animate-pulse">
+                <div className="h-4 bg-gray-200 rounded w-1/3 mb-3"/>
+                <div className="h-3 bg-gray-200 rounded w-1/2"/>
               </div>
             ))}
           </div>
         ) : orders.length === 0 ? (
           <div className="text-center py-20">
-            <div className="w-16 h-16 rounded-2xl bg-white/[0.04] border border-white/[0.07] flex items-center justify-center mx-auto mb-5">
-              <svg className="w-7 h-7 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div className="w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center mx-auto mb-5">
+              <svg className="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
               </svg>
             </div>
-            <p className="text-white/40 mb-2">No orders yet</p>
-            <p className="text-white/20 text-sm mb-6">Your orders will appear here once you've made a purchase</p>
-            <Link to="/products" className="bg-white text-black font-bold px-6 py-3 rounded-xl text-sm hover:bg-white/90 transition-colors">
+            <p className="text-brand-muted mb-2">No orders yet</p>
+            <p className="text-gray-400 text-sm mb-6">Your orders will appear here once you've made a purchase</p>
+            <Link to="/products" className="bg-black text-white font-bold px-6 py-3 rounded-xl text-sm hover:bg-gray-800 transition-colors">
               Start Shopping
             </Link>
           </div>

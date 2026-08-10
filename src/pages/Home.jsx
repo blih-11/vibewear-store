@@ -1,217 +1,388 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
+import { useCart } from '../context/CartContext';
+import { useCurrency } from '../context/CurrencyContext';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
-import { heroSlides, storeLocations } from '../data/products';
-import { fetchProducts } from '../lib/api';
+import InstagramEmbed from '../components/InstagramEmbed';
+import { heroSlides, products as localProducts, igSliderImages } from '../data/products';
+import { fetchProducts, fetchInstagramPosts } from '../lib/api';
 
-function SectionHeader({ eyebrow, title, subtitle, cta, ctaAction }) {
+const CATEGORIES = [
+  { id: 'all',         label: 'All' },
+  { id: 'tees',        label: 'Tees' },
+  { id: 'shirts',      label: 'Shirts' },
+  { id: 'hoodies',     label: 'Hoodies' },
+  { id: 'bottoms',     label: 'Bottoms' },
+  { id: 'outerwear',   label: 'Outerwear' },
+  { id: 'accessories', label: 'Accessories' },
+  { id: 'fullfit',     label: 'Full Fits' },
+];
+
+const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
+
+const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
+
+// Manual (no autoplay) paged slider — drag/swipe or click the dots to move between pages.
+// Used for the Instagram section on both mobile (1 item/page) and desktop (3 items/page).
+function IgSlider({ items, pageSize, columns, renderItem }) {
+  const pages = [];
+  for (let i = 0; i < items.length; i += pageSize) pages.push(items.slice(i, i + pageSize));
+
+  const [index, setIndex] = useState(0);
+  const dragRef = useRef({ startX: 0, dragging: false, delta: 0 });
+  const wasDragging = useRef(false);
+
+  useEffect(() => {
+    if (index > pages.length - 1) setIndex(Math.max(0, pages.length - 1));
+  }, [pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (pages.length === 0) return null;
+
+  const clamp = (i) => Math.max(0, Math.min(pages.length - 1, i));
+  const getX = (e) => (e.touches ? e.touches[0].clientX : e.clientX);
+
+  const onDown = (e) => { dragRef.current = { startX: getX(e), dragging: true, delta: 0 }; };
+  const onMove = (e) => {
+    if (!dragRef.current.dragging) return;
+    dragRef.current.delta = getX(e) - dragRef.current.startX;
+  };
+  const onUp = () => {
+    if (!dragRef.current.dragging) return;
+    const { delta } = dragRef.current;
+    dragRef.current.dragging = false;
+    wasDragging.current = Math.abs(delta) > 8;
+    if (Math.abs(delta) > 40) setIndex(i => clamp(i + (delta < 0 ? 1 : -1)));
+  };
+  const onClickCapture = (e) => {
+    if (wasDragging.current) { e.preventDefault(); e.stopPropagation(); wasDragging.current = false; }
+  };
+
   return (
-    <div className="flex flex-col md:flex-row md:items-end justify-between gap-3 mb-8">
-      <div>
-        {eyebrow && (
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-0.5 bg-white" />
-            <span className="text-white text-xs font-semibold uppercase tracking-widest">{eyebrow}</span>
+    <div style={{ overflow: 'hidden' }}>
+      <div
+        onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
+        onTouchStart={onDown} onTouchMove={onMove} onTouchEnd={onUp}
+        onClickCapture={onClickCapture}
+        onDragStart={e => e.preventDefault()}
+        style={{
+          display: 'flex',
+          transform: `translateX(-${index * 100}%)`,
+          transition: 'transform 0.4s cubic-bezier(0.4,0,0.2,1)',
+          cursor: pages.length > 1 ? 'grab' : 'default',
+          touchAction: 'pan-y',
+          userSelect: 'none',
+        }}
+      >
+        {pages.map((page, pi) => (
+          <div key={pi} style={{
+            flexShrink: 0, width: '100%',
+            display: 'grid', gridTemplateColumns: `repeat(${columns}, 1fr)`, gap: columns === 1 ? 0 : '16px',
+          }}>
+            {page.map((item, ii) => renderItem(item, `${pi}-${ii}`))}
           </div>
-        )}
-        <h2 className="text-brand-cream text-2xl md:text-3xl font-bold">{title}</h2>
-        {subtitle && <p className="text-brand-muted text-sm mt-1.5 max-w-lg">{subtitle}</p>}
+        ))}
       </div>
-      {cta && (
-        <button onClick={ctaAction} className="flex items-center gap-1.5 text-white text-sm font-semibold hover:gap-2.5 transition-all flex-shrink-0">
-          {cta} <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-        </button>
+      {pages.length > 1 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '14px', marginTop: '14px' }}>
+          <button onClick={() => setIndex(i => clamp(i - 1))} disabled={index === 0}
+            aria-label="Previous"
+            style={{
+              width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ddd',
+              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: index === 0 ? 'default' : 'pointer', opacity: index === 0 ? 0.3 : 1,
+              transition: 'opacity 0.2s', flexShrink: 0, padding: 0,
+            }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+
+          <div style={{ display: 'flex', gap: '6px' }}>
+            {pages.map((_, i) => (
+              <button key={i} onClick={() => setIndex(i)}
+                style={{
+                  width: i === index ? '20px' : '6px',
+                  height: '6px',
+                  borderRadius: '3px',
+                  border: 'none',
+                  background: i === index ? '#000' : '#ccc',
+                  cursor: 'pointer',
+                  padding: 0,
+                  transition: 'all 0.3s ease',
+                }}
+              />
+            ))}
+          </div>
+
+          <button onClick={() => setIndex(i => clamp(i + 1))} disabled={index === pages.length - 1}
+            aria-label="Next"
+            style={{
+              width: '30px', height: '30px', borderRadius: '50%', border: '1px solid #ddd',
+              background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: index === pages.length - 1 ? 'default' : 'pointer', opacity: index === pages.length - 1 ? 0.3 : 1,
+              transition: 'opacity 0.2s', flexShrink: 0, padding: 0,
+            }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
       )}
     </div>
   );
 }
 
-const categoryItems = [
-  { label: 'Graphic Tees', sub: 'Bold prints, boxy cuts, heavy cotton', image: '/images/products/img_13.jpg', filter: 'tops' },
-  { label: 'Bottoms', sub: 'Denim, cargo shorts, wide-leg', image: '/images/products/img_28.jpg', filter: 'bottoms' },
-  { label: 'Outerwear', sub: 'Hoodies, jackets, statement pieces', image: '/images/products/img_37.jpg', filter: 'outerwear' },
-  { label: 'New Arrivals', sub: 'Latest drops — move fast', image: '/images/products/img_47.jpg', filter: 'new-arrivals' },
-];
-
 export default function Home() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(normalisedLocal);
+  const [serverLoaded, setServerLoaded] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  const [igPosts, setIgPosts] = useState([]); // real posts added via the admin panel
 
   useEffect(() => {
     fetchProducts()
-      .then(data => { if (data.success) setProducts(data.products); })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      .then(data => {
+        if (data.success && data.products?.length > 0) {
+          setProducts(data.products);
+          setServerLoaded(true);
+        }
+      })
+      .catch(() => {});
   }, []);
 
-  const saleItems    = products.filter(p => p.isSale).slice(0, 4);
-  const newArrivals  = products.filter(p => p.isNew).slice(0, 4);
-  const featured     = products.filter(p => !p.isSale && !p.isNew).slice(0, 4);
+  useEffect(() => {
+    fetchInstagramPosts()
+      .then(data => { if (data.success) setIgPosts(data.posts || []); })
+      .catch(() => {}); // fall back to the static placeholder grid below
+  }, []);
 
-  const ProductGrid = ({ items }) => loading ? (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-      {[...Array(4)].map((_, i) => (
-        <div key={i} className="aspect-[3/4] rounded-xl bg-white/5 animate-pulse" />
-      ))}
-    </div>
-  ) : (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
-      {items.map(p => <ProductCard key={p._id} product={p} />)}
-    </div>
-  );
+  const filtered = activeFilter === 'all'
+    ? products
+    : products.filter(p => p.category?.includes(activeFilter));
+
+  const newArrivals = products.filter(p => p.isNew);
+  const saleItems = products.filter(p => p.isSale);
+
+  const padToFive = (arr) => {
+    const rem = arr.length % 5;
+    return rem === 0 ? arr : [...arr, ...Array(5 - rem).fill(null)];
+  };
 
   return (
-    <div className="bg-brand-bg min-h-screen">
+    <div style={{ background: '#fff', minHeight: '100vh' }}>
+
+      {/* Hero */}
       <HeroSlider slides={heroSlides} />
 
-      {/* Marquee Strip */}
-      <div className="bg-white/4 border-y border-white/8 overflow-hidden py-3">
-        <div className="flex gap-10 animate-[marquee_22s_linear_infinite] whitespace-nowrap">
-          {Array(8).fill(['Free Shipping Over ₦50k', 'New Season Drop', 'WE THE WAVE', 'Street Premium Quality']).flat().map((text, i) => (
-            <span key={i} className="text-white/60 text-xs font-semibold uppercase tracking-widest flex items-center gap-4">
-              {text} <span className="opacity-40">✦</span>
-            </span>
-          ))}
+      {!serverLoaded && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px', background: '#f8f8f8', borderBottom: '1px solid #f0f0f0' }}>
+          <div style={{ width: '12px', height: '12px', border: '1.5px solid #ccc', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+          <span style={{ fontSize: '11px', color: '#aaa', letterSpacing: '0.12em', textTransform: 'uppercase', fontFamily: 'var(--font-mono)' }}>Syncing inventory...</span>
         </div>
-      </div>
-
-      {/* Sales Section */}
-      {(loading || saleItems.length > 0) && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-          <SectionHeader eyebrow="Limited Time" title="Sales & Offers" subtitle="Save on selected pieces. Grab them before they're gone." cta="View All Sales" ctaAction={() => navigate('/products?filter=sale')} />
-          <ProductGrid items={saleItems} />
-        </section>
       )}
 
-      {/* Categories */}
-      <section className="bg-white/2 border-y border-white/5 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionHeader eyebrow="Browse" title="Shop by Category" subtitle="Curated selections for every style and occasion." />
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {categoryItems.map(cat => (
-              <div key={cat.filter} onClick={() => navigate(`/products?filter=${cat.filter}`)}
-                className="relative group aspect-[3/4] rounded-xl overflow-hidden cursor-pointer">
-                <img src={cat.image} alt={cat.label} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-4">
-                  <h3 className="text-white font-bold text-lg">{cat.label}</h3>
-                  <p className="text-white/60 text-xs mt-0.5">{cat.sub}</p>
-                  <div className="mt-2 text-white text-xs font-semibold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                    Shop Now →
-                  </div>
+      {/* ── Category Filter Tabs (Horizontal Slider) ── */}
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
+        <div
+          className="cat-slider"
+          style={{
+            display: 'flex',
+            gap: '8px',
+            overflowX: 'auto',
+            marginBottom: '2rem',
+            paddingBottom: '4px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}
+        >
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveFilter(cat.id)}
+              style={{
+                flexShrink: 0,
+                whiteSpace: 'nowrap',
+                padding: '8px 20px',
+                borderRadius: '2px',
+                border: '1px solid',
+                borderColor: activeFilter === cat.id ? '#000' : '#e0e0e0',
+                background: activeFilter === cat.id ? '#000' : '#fff',
+                color: activeFilter === cat.id ? '#fff' : '#555',
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                letterSpacing: '0.1em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
+        {activeFilter !== 'all' ? (
+          <>
+            <div className="product-grid-5">
+              {padToFive(filtered).map((p, i) => p
+                ? <ProductCard key={p._id} product={p} />
+                : <div key={`ph-${i}`} className="ghost-card" />
+              )}
+            </div>
+            {filtered.length === 0 && (
+              <p style={{ textAlign: 'center', color: '#aaa', padding: '3rem 0', fontSize: '0.9rem' }}>No products in this category yet.</p>
+            )}
+          </>
+        ) : (
+          <>
+            {/* New Arrivals */}
+            {newArrivals.length > 0 && (
+              <div style={{ marginBottom: '3.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>New Arrivals</h2>
+                  <button onClick={() => navigate('/products?filter=new-arrivals')}
+                    style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                    View All
+                  </button>
+                </div>
+                <div className="product-grid-5">
+                  {padToFive(newArrivals.slice(0, 10)).map((p, i) => p
+                    ? <ProductCard key={p._id} product={p} />
+                    : <div key={`ph-${i}`} className="ghost-card" />
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            )}
 
-      {/* New Arrivals */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16">
-        <SectionHeader eyebrow="Just Dropped" title="New Arrivals" subtitle="Fresh styles from Season 4 — first to wear, first to wave." cta="See More" ctaAction={() => navigate('/products?filter=new-arrivals')} />
-        <ProductGrid items={newArrivals} />
-      </section>
-
-      {/* Feature Banner */}
-      <section className="relative overflow-hidden py-24">
-        <img src="/images/products/img_30.jpg" alt="Feature" className="absolute inset-0 w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-brand-bg/82" />
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 text-center">
-          <span className="text-white/50 text-xs font-semibold uppercase tracking-widest">The VIBE WEAR Way</span>
-          <h2 className="text-brand-cream text-4xl md:text-5xl font-black mt-2 mb-4 leading-tight">
-            Real Drops,<br />Real Drip
-          </h2>
-          <p className="text-brand-cream/65 max-w-lg mx-auto mb-7 text-base leading-relaxed">
-            Every VIBE WEAR piece is a statement. Real product, hand-picked — heavyweight tees, graphic prints, denim, and outerwear built for those who dress with intention.
-          </p>
-          <button onClick={() => navigate('/about')} className="bg-white text-black font-bold px-8 py-3.5 rounded-lg hover:opacity-88 transition-all duration-200">
-            Our Story
-          </button>
-        </div>
-      </section>
-
-      {/* Featured Pieces */}
-      <section className="bg-white/2 border-y border-white/5 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <SectionHeader eyebrow="Editor's Pick" title="Featured Pieces" subtitle="Handpicked for this season's must-haves." cta="Browse All" ctaAction={() => navigate('/products')} />
-          <ProductGrid items={featured} />
-        </div>
-      </section>
-
-      {/* Bold by Design Banner */}
-      <section className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="relative rounded-2xl overflow-hidden bg-white p-8 md:p-14">
-            <div className="absolute top-0 right-0 w-56 h-56 rounded-full border-4 border-black/8 translate-x-1/3 -translate-y-1/3" />
-            <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full border-4 border-black/8 -translate-x-1/4 translate-y-1/4" />
-            <div className="relative grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <span className="text-black/50 text-xs font-semibold uppercase tracking-widest">The Brand</span>
-                <h2 className="text-black text-4xl md:text-5xl font-black mt-2 mb-4 leading-tight">Bold by Design</h2>
-                <p className="text-black/65 leading-relaxed mb-7 text-sm md:text-base">
-                  VIBE WEAR was born on the block and built for the streets. Our drops are for those who move with confidence — bold fits, premium fabrics, and zero compromise on style.
-                </p>
-                <div className="grid grid-cols-3 gap-5 mb-7">
-                  {[['2021', 'Founded'], ['30+', 'Drops'], ['5K+', 'On The Wave']].map(([num, label]) => (
-                    <div key={label}>
-                      <div className="text-black font-black text-2xl">{num}</div>
-                      <div className="text-black/50 text-xs mt-0.5">{label}</div>
-                    </div>
-                  ))}
+            {/* Sale */}
+            {saleItems.length > 0 && (
+              <div style={{ marginBottom: '3.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+                  <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>On Sale</h2>
+                  <button onClick={() => navigate('/products?filter=sale')}
+                    style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                    View All
+                  </button>
                 </div>
-                <button onClick={() => navigate('/products')} className="bg-black text-white font-bold px-7 py-3.5 rounded-lg hover:opacity-88 transition-colors">
-                  Shop the Brand
+                <div className="product-grid-5">
+                  {padToFive(saleItems.slice(0, 5)).map((p, i) => p
+                    ? <ProductCard key={p._id} product={p} />
+                    : <div key={`ph-${i}`} className="ghost-card" />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* All Products */}
+            <div style={{ marginBottom: '3.5rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+                <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>All Products</h2>
+                <button onClick={() => navigate('/products')}
+                  style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                  Shop All
                 </button>
               </div>
-              <div className="hidden md:grid grid-cols-2 gap-3">
-                {['/images/products/img_36.jpg', '/images/products/img_42.jpg', '/images/products/img_28.jpg', '/images/products/img_34.jpg'].map((src, i) => (
-                  <div key={i} className={`rounded-xl overflow-hidden ${i % 2 === 1 ? 'mt-5' : ''}`}>
-                    <img src={src} alt="" className="w-full aspect-square object-cover" />
-                  </div>
-                ))}
+              <div className="product-grid-5">
+                {padToFive(products.slice(0, 10)).map((p, i) => p
+                  ? <ProductCard key={p._id} product={p} />
+                  : <div key={`ph-${i}`} className="ghost-card" />
+                )}
               </div>
             </div>
+          </>
+        )}
+      </div>
+
+      {/* ── Follow Us on Instagram ── */}
+      <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0' }}>
+        <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 1.5rem' }}>
+          <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+            <p style={{ fontSize: '0.65rem', letterSpacing: '0.2em', textTransform: 'uppercase', color: '#aaa', fontFamily: 'var(--font-mono)', marginBottom: '6px' }}>Social</p>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#000', marginBottom: '6px' }}>Follow Us on Instagram</h2>
+            <a href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer"
+              style={{ color: '#aaa', fontSize: '0.82rem', fontFamily: 'var(--font-mono)', textDecoration: 'none', letterSpacing: '0.1em' }}
+              onMouseEnter={e => e.target.style.color = '#000'}
+              onMouseLeave={e => e.target.style.color = '#aaa'}>
+              @vibewear_
+            </a>
+          </div>
+
+          {(() => {
+            const hasRealPosts = igPosts.length > 0;
+            const igItems = hasRealPosts ? igPosts : IG_GRID_DESKTOP;
+            const renderIgItem = (item, key) => hasRealPosts ? (
+              <div key={key} style={{ background: '#f5f5f5', padding: '8px', display: 'flex', alignItems: 'flex-start', justifyContent: 'center' }}>
+                <InstagramEmbed url={item.url} />
+              </div>
+            ) : (
+              <a key={key} href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer" draggable={false}
+                style={{ position: 'relative', aspectRatio: '1', overflow: 'hidden', display: 'block', background: '#f5f5f5' }}>
+                <img src={item} alt="Instagram" draggable={false}
+                  style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }}
+                />
+              </a>
+            );
+            return (
+              <>
+                {/* Desktop: 3-per-page grid, drag or dots to see more */}
+                <div className="ig-desktop-grid">
+                  <IgSlider items={igItems} pageSize={3} columns={3} renderItem={renderIgItem} />
+                </div>
+                {/* Mobile: 1-per-page, drag or dots to see more */}
+                <div className="ig-mobile-slider">
+                  <IgSlider items={igItems} pageSize={1} columns={1} renderItem={renderIgItem} />
+                </div>
+              </>
+            );
+          })()}
+
+          <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
+            <a href="https://instagram.com/vibewear_" target="_blank" rel="noreferrer" className="btn-outline"
+              style={{ fontSize: '0.72rem', letterSpacing: '0.12em', display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+              </svg>
+              Follow
+            </a>
           </div>
         </div>
       </section>
 
-      {/* Store Locations */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-16 pb-24">
-        <div className="grid md:grid-cols-2 gap-10 items-center">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-0.5 bg-white" />
-              <span className="text-white text-xs font-semibold uppercase tracking-widest">Find Us</span>
-            </div>
-            <h2 className="text-brand-cream text-2xl md:text-3xl font-bold mb-4">Visit a VIBE WEAR Store</h2>
-            <p className="text-brand-muted text-sm leading-relaxed mb-7">
-              Come through in person. Feel the fabric, try the fit, catch the vibe.
-            </p>
-            <div className="space-y-3">
-              {storeLocations.slice(0, 2).map(store => (
-                <div key={store.id} className="bg-white/4 border border-white/8 rounded-xl p-4">
-                  <h4 className="text-brand-cream font-semibold text-sm">{store.name}</h4>
-                  <p className="text-brand-muted text-xs mt-1">{store.address}</p>
-                  <p className="text-brand-muted text-xs mt-0.5">{store.hours}</p>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => navigate('/find-store')} className="mt-5 flex items-center gap-1.5 text-white text-sm font-semibold hover:gap-2.5 transition-all">
-              All Locations <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </button>
-          </div>
-          <div className="relative   rounded-xl overflow-hidden aspect-square">
-            <img src="/images/products/img_22.jpg" alt="VIBE WEAR Store" className="w-full h-90 object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-            <div className="absolute bottom-5 left-5">
-              <p className="text-white/60 text-xs uppercase tracking-widest">Lagos Flagship</p>
-              <p className="text-white font-bold text-lg mt-1">Victoria Island</p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Hide scrollbar for category slider */
+        .cat-slider::-webkit-scrollbar { display: none; }
+
+        /* 5-col on desktop, 2-col on mobile */
+        .product-grid-5 {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 16px;
+          margin-bottom: 4rem;
+        }
+        .ghost-card {
+          visibility: hidden;
+        }
+
+        /* IG — IgSlider handles its own per-page grid layout inline; these just toggle visibility */
+        .ig-desktop-grid { display: block; }
+        .ig-mobile-slider { display: none; }
+
+        @media (max-width: 1024px) {
+          .product-grid-5 {
+            grid-template-columns: repeat(3, 1fr);
+          }
+        }
+
+        @media (max-width: 767px) {
+          .product-grid-5 {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+          }
+          .ig-desktop-grid { display: none; }
+          .ig-mobile-slider { display: block; }
+        }
+      `}</style>
     </div>
   );
 }

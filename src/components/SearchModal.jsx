@@ -40,8 +40,8 @@ export default function SearchModal() {
       <div className={`fixed inset-0 bg-black/70 z-[60] transition-opacity duration-300 ${searchOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`} onClick={() => setSearchOpen(false)} />
       <div className={`fixed top-0 left-0 right-0 z-[70] transition-all duration-300 px-4 ${searchOpen ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0 pointer-events-none'}`}>
         <div className="max-w-2xl mx-auto mt-20">
-          <div className="bg-brand-bg border border-white/12 rounded-2xl shadow-2xl overflow-hidden">
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/8">
+          <div className="bg-brand-bg border border-gray-200 rounded-2xl shadow-2xl overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200">
               <svg className="w-5 h-5 text-brand-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
               <input ref={inputRef} value={query} onChange={e => setQuery(e.target.value)}
                 placeholder="Search products, categories..."
@@ -56,7 +56,7 @@ export default function SearchModal() {
               <div className="py-2 max-h-80 overflow-y-auto">
                 {results.map(product => (
                   <button key={product._id} onClick={() => handleSelect(product)}
-                    className="w-full flex items-center gap-4 px-5 py-3 hover:bg-white/5 transition-colors text-left">
+                    className="w-full flex items-center gap-4 px-5 py-3 hover:bg-gray-100 transition-colors text-left">
                     <img src={product.image} alt={product.name} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-brand-cream text-sm font-medium truncate">{product.name}</p>
@@ -80,7 +80,7 @@ export default function SearchModal() {
                 <div className="flex flex-wrap gap-2">
                   {['Tees', 'Graphic', 'Shorts', 'Outerwear', 'New Arrivals', 'Bundles'].map(tag => (
                     <button key={tag} onClick={() => setQuery(tag)}
-                      className="px-3 py-1.5 bg-white/5 text-brand-muted hover:text-brand-cream hover:bg-white/10 rounded-full text-sm transition-colors">
+                      className="px-3 py-1.5 bg-gray-100 text-brand-muted hover:text-brand-cream hover:bg-gray-200 rounded-full text-sm transition-colors">
                       {tag}
                     </button>
                   ))}

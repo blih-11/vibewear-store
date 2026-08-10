@@ -20,7 +20,7 @@ export default function About() {
         <div className="absolute inset-0 bg-brand-bg/80" />
         <div className="absolute inset-0 flex items-center justify-center text-center px-4">
           <div>
-            <span className="text-white/50 text-xs font-semibold uppercase tracking-widest">Our Story</span>
+            <span className="text-brand-muted text-xs font-semibold uppercase tracking-widest">Our Story</span>
             <h1 className="text-brand-cream text-5xl md:text-6xl font-black mt-3">VIBE WEAR</h1>
           </div>
         </div>
@@ -32,7 +32,7 @@ export default function About() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-6 h-0.5 bg-white" />
-              <span className="text-white text-xs font-semibold uppercase tracking-widest">How It Began</span>
+              <span className="text-brand-cream text-xs font-semibold uppercase tracking-widest">How It Began</span>
             </div>
             <h2 className="text-brand-cream text-3xl font-bold leading-tight mb-5">Born On The Block.<br />Built for the Wave.</h2>
             <div className="space-y-4 text-brand-muted text-sm leading-relaxed">
@@ -62,13 +62,13 @@ export default function About() {
         {/* Values */}
         <div className="mb-20">
           <div className="text-center mb-10">
-            <span className="text-white text-xs font-semibold uppercase tracking-widest">What We Stand For</span>
+            <span className="text-brand-cream text-xs font-semibold uppercase tracking-widest">What We Stand For</span>
             <h2 className="text-brand-cream text-3xl font-bold mt-2">Our Values</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             {values.map(v => (
-              <div key={v.title} className="bg-white/4 border border-white/8 rounded-2xl p-6 hover:border-white/25 transition-colors duration-200">
-                <div className="text-white text-2xl mb-4">{v.icon}</div>
+              <div key={v.title} className="bg-gray-100 border border-gray-200 rounded-2xl p-6 hover:border-gray-400 transition-colors duration-200">
+                <div className="text-brand-cream text-2xl mb-4">{v.icon}</div>
                 <h3 className="text-brand-cream font-bold text-base mb-2">{v.title}</h3>
                 <p className="text-brand-muted text-sm leading-relaxed">{v.desc}</p>
               </div>

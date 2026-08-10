@@ -2,14 +2,21 @@ import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../lib/api';
+import { products as localProducts } from '../data/products';
+
+const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
 
 const allCategories = [
-  { id: 'all', label: 'All' },
+  { id: 'all',          label: 'All' },
   { id: 'new-arrivals', label: 'New Arrivals' },
-  { id: 'sale', label: 'Sale' },
-  { id: 'tops', label: 'Tees' },
-  { id: 'bottoms', label: 'Bottoms' },
-  { id: 'outerwear', label: 'Outerwear' },
+  { id: 'sale',         label: 'Sale' },
+  { id: 'tees',         label: 'Tees' },
+  { id: 'shirts',       label: 'Shirts' },
+  { id: 'hoodies',      label: 'Hoodies' },
+  { id: 'bottoms',      label: 'Bottoms' },
+  { id: 'outerwear',    label: 'Outerwear' },
+  { id: 'accessories',  label: 'Accessories' },
+  { id: 'fullfit',      label: 'Full Fits' },
 ];
 
 export default function Products() {
@@ -17,9 +24,7 @@ export default function Products() {
   const [activeFilter, setActiveFilter] = useState(searchParams.get('filter') || 'all');
   const [sort, setSort] = useState('default');
   const [localSearch, setLocalSearch] = useState('');
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [products, setProducts] = useState(normalisedLocal);
 
   useEffect(() => {
     const f = searchParams.get('filter');
@@ -27,15 +32,9 @@ export default function Products() {
   }, [searchParams]);
 
   useEffect(() => {
-    setLoading(true);
-    setError('');
     fetchProducts()
-      .then(data => {
-        if (data.success) setProducts(data.products);
-        else setError('Failed to load products.');
-      })
-      .catch(() => setError("Cannot connect to server. Make sure it's running on port 4000."))
-      .finally(() => setLoading(false));
+      .then(data => { if (data.success && data.products?.length) setProducts(data.products); })
+      .catch(() => {});
   }, []);
 
   const filtered = useMemo(() => {
@@ -43,7 +42,7 @@ export default function Products() {
     if (localSearch.trim()) {
       const q = localSearch.toLowerCase();
       list = list.filter(p =>
-        p.name.toLowerCase().includes(q) ||
+        p.name?.toLowerCase().includes(q) ||
         p.tags?.some(t => t.toLowerCase().includes(q)) ||
         p.category?.some(c => c.toLowerCase().includes(q))
       );
@@ -58,86 +57,98 @@ export default function Products() {
     return list;
   }, [activeFilter, sort, localSearch, products]);
 
+  // Pad to complete 5-col rows
+  const paddedFiltered = useMemo(() => {
+    const rem = filtered.length % 5;
+    return rem === 0 ? filtered : [...filtered, ...Array(5 - rem).fill(null)];
+  }, [filtered]);
+
   return (
-    <div className="bg-brand-bg min-h-screen pt-8 pb-20">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-6 h-0.5 bg-white" />
-            <span className="text-white text-xs font-semibold uppercase tracking-widest">Catalogue</span>
-          </div>
-          <h1 className="text-brand-cream text-3xl md:text-4xl font-bold">All Products</h1>
+    <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px', paddingBottom: '80px' }}>
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom: '2rem', paddingTop: '1rem' }}>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#000', letterSpacing: '0.04em' }}>Shop</h1>
+          <p style={{ color: '#aaa', fontSize: '0.82rem', marginTop: '4px' }}>{filtered.length} products</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="relative flex-1">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        {/* Search + Sort */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+          <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+            <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}
+              width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-4.35-4.35M16.65 16.65A7 7 0 1116.65 3a7 7 0 010 13.65z" />
             </svg>
             <input
-              type="text"
-              value={localSearch}
-              onChange={e => setLocalSearch(e.target.value)}
+              type="text" value={localSearch} onChange={e => setLocalSearch(e.target.value)}
               placeholder="Search products..."
-              className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-white text-sm placeholder-white/25 focus:outline-none focus:border-white/25 transition-colors"
+              style={{ width: '100%', border: '1px solid #e5e5e5', borderRadius: '2px', padding: '10px 12px 10px 38px', fontSize: '0.85rem', color: '#000', outline: 'none', fontFamily: 'inherit' }}
+              onFocus={e => e.target.style.borderColor = '#000'}
+              onBlur={e => e.target.style.borderColor = '#e5e5e5'}
             />
           </div>
-          <select
-            value={sort}
-            onChange={e => setSort(e.target.value)}
-            className="bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-white text-sm focus:outline-none focus:border-white/25 transition-colors appearance-none cursor-pointer"
-          >
+          <select value={sort} onChange={e => setSort(e.target.value)}
+            style={{ border: '1px solid #e5e5e5', borderRadius: '2px', padding: '10px 14px', fontSize: '0.82rem', color: '#555', background: '#fff', cursor: 'pointer', outline: 'none', fontFamily: 'inherit' }}>
             <option value="default">Sort: Default</option>
             <option value="newest">Newest First</option>
-            <option value="price-asc">Price: Low → High</option>
-            <option value="price-desc">Price: High → Low</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
             <option value="rating">Top Rated</option>
           </select>
         </div>
 
-        <div className="flex gap-2 flex-wrap mb-8">
+        {/* Category Filters */}
+        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2rem' }}>
           {allCategories.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveFilter(cat.id)}
-              className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider border transition-all ${
-                activeFilter === cat.id
-                  ? 'bg-white text-black border-white'
-                  : 'bg-transparent text-white/50 border-white/15 hover:border-white/35 hover:text-white/80'
-              }`}
-            >
+            <button key={cat.id} onClick={() => setActiveFilter(cat.id)}
+              style={{
+                padding: '7px 18px', borderRadius: '2px',
+                border: '1px solid',
+                borderColor: activeFilter === cat.id ? '#000' : '#e0e0e0',
+                background: activeFilter === cat.id ? '#000' : '#fff',
+                color: activeFilter === cat.id ? '#fff' : '#555',
+                fontSize: '0.72rem', fontWeight: 600,
+                letterSpacing: '0.1em', textTransform: 'uppercase',
+                cursor: 'pointer', transition: 'all 0.18s',
+              }}>
               {cat.label}
             </button>
           ))}
         </div>
 
-        {loading && (
-          <div className="flex items-center justify-center py-24">
-            <div className="w-8 h-8 border-2 border-white/10 border-t-white/50 rounded-full animate-spin" />
-          </div>
-        )}
+        {/* Products Grid */}
+        <div className="shop-grid-5">
+          {paddedFiltered.map((product, i) =>
+            product
+              ? <ProductCard key={product._id} product={product} />
+              : <div key={`ph-${i}`} style={{ visibility: 'hidden' }} />
+          )}
+        </div>
 
-        {error && !loading && (
-          <div className="text-center py-24">
-            <p className="text-red-400 text-sm">{error}</p>
+        {filtered.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '5rem 0', color: '#aaa', fontSize: '0.9rem' }}>
+            No products found.
           </div>
-        )}
-
-        {!loading && !error && (
-          <>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filtered.map(product => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-            {filtered.length === 0 && (
-              <div className="text-center py-24">
-                <p className="text-white/30 text-sm">No products found.</p>
-              </div>
-            )}
-          </>
         )}
       </div>
+
+      <style>{`
+        .shop-grid-5 {
+          display: grid;
+          grid-template-columns: repeat(5, 1fr);
+          gap: 16px;
+        }
+        @media (max-width: 1024px) {
+          .shop-grid-5 { grid-template-columns: repeat(3, 1fr); }
+        }
+        @media (max-width: 767px) {
+          .shop-grid-5 {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+          }
+        }
+      `}</style>
     </div>
   );
 }
