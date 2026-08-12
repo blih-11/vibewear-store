@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import CartDrawer from './components/CartDrawer';
 import SearchModal from './components/SearchModal';
 import ConfirmModal from './components/ConfirmModal';
+import PageLoader from './components/PageLoader';
 
 import AuthGate from './pages/AuthGate';
 import Home from './pages/Home';
@@ -50,12 +51,7 @@ function AppContent() {
     }
   }, [user, loading, isGuest]);
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '24px', height: '24px', border: '2px solid #f0f0f0', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  if (loading) return <PageLoader />;
 
   if (!user && !isGuest) return (
     <AuthGate onContinueAsGuest={() => {

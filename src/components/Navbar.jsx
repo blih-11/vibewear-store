@@ -53,9 +53,13 @@ export default function Navbar() {
   ];
   const isActive = (to) => location.pathname === to;
 
-  const iconColor = scrolled ? '#111' : '#fff';
-  // When menu is open, hamburger bars must always be dark (menu bg is white)
-  const barColor = menuOpen ? '#111' : iconColor;
+  // The mobile menu panel is white and sits behind the top bar, so once it's open the bar
+  // needs the same "scrolled" (white bg, dark icons/logo) treatment even if scrolled === false —
+  // otherwise a white logo renders over an effectively-white background and disappears.
+  const effectiveScrolled = scrolled || menuOpen;
+
+  const iconColor = effectiveScrolled ? '#111' : '#fff';
+  const barColor = iconColor;
 
   return (
     <>
@@ -63,9 +67,9 @@ export default function Navbar() {
       <nav
         className="zttw-nav"
         style={{
-          background: scrolled ? '#fff' : 'transparent',
-          borderBottom: scrolled ? '1px solid #ebebeb' : '1px solid transparent',
-          boxShadow: scrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
+          background: effectiveScrolled ? '#fff' : 'transparent',
+          borderBottom: effectiveScrolled ? '1px solid #ebebeb' : '1px solid transparent',
+          boxShadow: effectiveScrolled ? '0 1px 12px rgba(0,0,0,0.06)' : 'none',
         }}
       >
         {/* LEFT */}
@@ -101,8 +105,7 @@ export default function Navbar() {
         <div className="zttw-nav__center">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <img
-              style={{ height: "50px" }}
-              src={scrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
+              src={effectiveScrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
               alt="Vibe Wear"
               className="zttw-nav__logo"
             />
@@ -213,8 +216,8 @@ export default function Navbar() {
             {cartCount > 0 && (
               <span style={{
                 position: 'absolute', top: '-2px', right: '-5px',
-                background: scrolled ? '#000' : '#fff',
-                color: scrolled ? '#fff' : '#000',
+                background: effectiveScrolled ? '#000' : '#fff',
+                color: effectiveScrolled ? '#fff' : '#000',
                 borderRadius: '50%', minWidth: '16px', height: '16px',
                 fontSize: '9px', fontWeight: 700,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',

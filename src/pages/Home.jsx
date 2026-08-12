@@ -5,21 +5,19 @@ import { useCurrency } from '../context/CurrencyContext';
 import HeroSlider from '../components/HeroSlider';
 import ProductCard from '../components/ProductCard';
 import InstagramEmbed from '../components/InstagramEmbed';
+import StoreShowcase from '../components/StoreShowcase';
+import CategoryShowcase from '../components/CategoryShowcase';
+import FeaturedEditorial from '../components/FeaturedEditorial';
 import { heroSlides, products as localProducts, igSliderImages } from '../data/products';
 import { fetchProducts, fetchInstagramPosts } from '../lib/api';
 
-const CATEGORIES = [
-  { id: 'all',         label: 'All' },
-  { id: 'tees',        label: 'Tees' },
-  { id: 'shirts',      label: 'Shirts' },
-  { id: 'hoodies',     label: 'Hoodies' },
-  { id: 'bottoms',     label: 'Bottoms' },
-  { id: 'outerwear',   label: 'Outerwear' },
-  { id: 'accessories', label: 'Accessories' },
-  { id: 'fullfit',     label: 'Full Fits' },
-];
-
 const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
+
+// ═══════════════════════════════════════════════════════════════════════════
+// STORE SHOWCASE PHOTO — edit this path, not StoreShowcase.jsx.
+// File must exist in /public/images/. Leave as null to show the placeholder.
+// ═══════════════════════════════════════════════════════════════════════════
+const SHOWCASE_1_IMAGE = '/images/store.jpg';
 
 const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
 
@@ -30,7 +28,7 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
   for (let i = 0; i < items.length; i += pageSize) pages.push(items.slice(i, i + pageSize));
 
   const [index, setIndex] = useState(0);
-  const dragRef = useRef({ startX: 0, dragging: false, delta: 0 });
+  const dragRef = useRef({ startX: 0, dragging: false, delta: 0, pointerId: null });
   const wasDragging = useRef(false);
 
   useEffect(() => {
@@ -40,19 +38,26 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
   if (pages.length === 0) return null;
 
   const clamp = (i) => Math.max(0, Math.min(pages.length - 1, i));
-  const getX = (e) => (e.touches ? e.touches[0].clientX : e.clientX);
 
-  const onDown = (e) => { dragRef.current = { startX: getX(e), dragging: true, delta: 0 }; };
-  const onMove = (e) => {
-    if (!dragRef.current.dragging) return;
-    dragRef.current.delta = getX(e) - dragRef.current.startX;
+  // Pointer Events + setPointerCapture so dragging keeps tracking even if the cursor leaves
+  // the track's bounds mid-swipe — plain onMouseLeave-based drags break for mouse users
+  // (touch doesn't have this problem, which is why it can look like "only touch works").
+  const onPointerDown = (e) => {
+    if (pages.length <= 1) return;
+    dragRef.current = { startX: e.clientX, dragging: true, delta: 0, pointerId: e.pointerId };
+    e.currentTarget.setPointerCapture(e.pointerId);
   };
-  const onUp = () => {
+  const onPointerMove = (e) => {
     if (!dragRef.current.dragging) return;
-    const { delta } = dragRef.current;
+    dragRef.current.delta = e.clientX - dragRef.current.startX;
+  };
+  const endDrag = (e) => {
+    if (!dragRef.current.dragging) return;
+    const { delta, pointerId } = dragRef.current;
     dragRef.current.dragging = false;
     wasDragging.current = Math.abs(delta) > 8;
     if (Math.abs(delta) > 40) setIndex(i => clamp(i + (delta < 0 ? 1 : -1)));
+    try { e.currentTarget.releasePointerCapture(pointerId); } catch { /* already released */ }
   };
   const onClickCapture = (e) => {
     if (wasDragging.current) { e.preventDefault(); e.stopPropagation(); wasDragging.current = false; }
@@ -61,8 +66,7 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
   return (
     <div style={{ overflow: 'hidden' }}>
       <div
-        onMouseDown={onDown} onMouseMove={onMove} onMouseUp={onUp} onMouseLeave={onUp}
-        onTouchStart={onDown} onTouchMove={onMove} onTouchEnd={onUp}
+        onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}
         onClickCapture={onClickCapture}
         onDragStart={e => e.preventDefault()}
         style={{
@@ -133,7 +137,6 @@ export default function Home() {
   const navigate = useNavigate();
   const [products, setProducts] = useState(normalisedLocal);
   const [serverLoaded, setServerLoaded] = useState(false);
-  const [activeFilter, setActiveFilter] = useState('all');
 
   const [igPosts, setIgPosts] = useState([]); // real posts added via the admin panel
 
@@ -153,10 +156,6 @@ export default function Home() {
       .then(data => { if (data.success) setIgPosts(data.posts || []); })
       .catch(() => {}); // fall back to the static placeholder grid below
   }, []);
-
-  const filtered = activeFilter === 'all'
-    ? products
-    : products.filter(p => p.category?.includes(activeFilter));
 
   const newArrivals = products.filter(p => p.isNew);
   const saleItems = products.filter(p => p.isSale);
@@ -179,117 +178,85 @@ export default function Home() {
         </div>
       )}
 
-      {/* ── Category Filter Tabs (Horizontal Slider) ── */}
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        <div
-          className="cat-slider"
-          style={{
-            display: 'flex',
-            gap: '8px',
-            overflowX: 'auto',
-            marginBottom: '2rem',
-            paddingBottom: '4px',
-            scrollbarWidth: 'none',
-            msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}
-        >
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveFilter(cat.id)}
-              style={{
-                flexShrink: 0,
-                whiteSpace: 'nowrap',
-                padding: '8px 20px',
-                borderRadius: '2px',
-                border: '1px solid',
-                borderColor: activeFilter === cat.id ? '#000' : '#e0e0e0',
-                background: activeFilter === cat.id ? '#000' : '#fff',
-                color: activeFilter === cat.id ? '#fff' : '#555',
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.1em',
-                textTransform: 'uppercase',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {activeFilter !== 'all' ? (
-          <>
+        {/* New Arrivals */}
+        {newArrivals.length > 0 && (
+          <div style={{ marginBottom: '3.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>New Arrivals</h2>
+              <button onClick={() => navigate('/products?filter=new-arrivals')}
+                style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                View All
+              </button>
+            </div>
             <div className="product-grid-5">
-              {padToFive(filtered).map((p, i) => p
+              {padToFive(newArrivals.slice(0, 10)).map((p, i) => p
                 ? <ProductCard key={p._id} product={p} />
                 : <div key={`ph-${i}`} className="ghost-card" />
               )}
             </div>
-            {filtered.length === 0 && (
-              <p style={{ textAlign: 'center', color: '#aaa', padding: '3rem 0', fontSize: '0.9rem' }}>No products in this category yet.</p>
-            )}
-          </>
-        ) : (
-          <>
-            {/* New Arrivals */}
-            {newArrivals.length > 0 && (
-              <div style={{ marginBottom: '3.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-                  <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>New Arrivals</h2>
-                  <button onClick={() => navigate('/products?filter=new-arrivals')}
-                    style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                    View All
-                  </button>
-                </div>
-                <div className="product-grid-5">
-                  {padToFive(newArrivals.slice(0, 10)).map((p, i) => p
-                    ? <ProductCard key={p._id} product={p} />
-                    : <div key={`ph-${i}`} className="ghost-card" />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Sale */}
-            {saleItems.length > 0 && (
-              <div style={{ marginBottom: '3.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-                  <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>On Sale</h2>
-                  <button onClick={() => navigate('/products?filter=sale')}
-                    style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                    View All
-                  </button>
-                </div>
-                <div className="product-grid-5">
-                  {padToFive(saleItems.slice(0, 5)).map((p, i) => p
-                    ? <ProductCard key={p._id} product={p} />
-                    : <div key={`ph-${i}`} className="ghost-card" />
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* All Products */}
-            <div style={{ marginBottom: '3.5rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-                <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>All Products</h2>
-                <button onClick={() => navigate('/products')}
-                  style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                  Shop All
-                </button>
-              </div>
-              <div className="product-grid-5">
-                {padToFive(products.slice(0, 10)).map((p, i) => p
-                  ? <ProductCard key={p._id} product={p} />
-                  : <div key={`ph-${i}`} className="ghost-card" />
-                )}
-              </div>
-            </div>
-          </>
+          </div>
         )}
+      </div>
+
+      {/* ── Store showcase #1 — between New Arrivals and Latest. Edit image/text/link via props. ── */}
+      <StoreShowcase
+        imageSide="left"
+        imageWidth={60}
+        image={SHOWCASE_1_IMAGE}
+        title="VISIT US IN PERSON"
+        lines={[
+          'In-person shopping experience — add your store address here.',
+          'Add your opening hours here.',
+        ]}
+        buttonLabel="INSTAGRAM"
+        buttonHref="https://instagram.com/vibewear_"
+      />
+
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
+        {/* Latest */}
+        {saleItems.length > 0 && (
+          <div style={{ marginBottom: '3.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+              <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>Latest</h2>
+              <button onClick={() => navigate('/products?filter=sale')}
+                style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+                View All
+              </button>
+            </div>
+            <div className="product-grid-5">
+              {padToFive(saleItems.slice(0, 5)).map((p, i) => p
+                ? <ProductCard key={p._id} product={p} />
+                : <div key={`ph-${i}`} className="ghost-card" />
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Featured editorial — 2x2 product grid + lifestyle banner. Before "Explore the Collection". ── */}
+      <FeaturedEditorial products={products.slice(0, 4)} bannerImage={'image s/store2.jpg'} bannerTitle="ZERO TO THE WORLD" bannerLink="/products" />
+
+      {/* ── Category showcase — between Latest and All Products. Edit categories/text via props. ── */}
+      <CategoryShowcase dark />
+
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
+        {/* All Products */}
+        <div style={{ marginBottom: '3.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>All Products</h2>
+            <button onClick={() => navigate('/products')}
+              style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
+              Shop All
+            </button>
+          </div>
+          <div className="product-grid-5">
+            {padToFive(products.slice(0, 10)).map((p, i) => p
+              ? <ProductCard key={p._id} product={p} />
+              : <div key={`ph-${i}`} className="ghost-card" />
+            )}
+          </div>
+        </div>
       </div>
 
       {/* ── Follow Us on Instagram ── */}
@@ -351,7 +318,6 @@ export default function Home() {
         @keyframes spin { to { transform: rotate(360deg); } }
 
         /* Hide scrollbar for category slider */
-        .cat-slider::-webkit-scrollbar { display: none; }
 
         /* 5-col on desktop, 2-col on mobile */
         .product-grid-5 {

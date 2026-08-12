@@ -5,6 +5,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import StarRating from '../components/StarRating';
 import ProductCard from '../components/ProductCard';
 import { products as localProducts } from '../data/products';
+import PageLoader from '../components/PageLoader';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 
@@ -58,12 +59,7 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) return (
-    <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ width: '32px', height: '32px', border: '2px solid #f0f0f0', borderTopColor: '#000', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </div>
-  );
+  if (loading) return <PageLoader />;
 
   if (!product) return (
     <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
