@@ -8,10 +8,8 @@ import InstagramEmbed from '../components/InstagramEmbed';
 import StoreShowcase from '../components/StoreShowcase';
 import CategoryShowcase from '../components/CategoryShowcase';
 import FeaturedEditorial from '../components/FeaturedEditorial';
-import { heroSlides, products as localProducts, igSliderImages } from '../data/products';
+import { heroSlides, igSliderImages } from '../data/products';
 import { fetchProducts, fetchInstagramPosts } from '../lib/api';
-
-const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STORE SHOWCASE PHOTO — edit this path, not StoreShowcase.jsx.
@@ -20,6 +18,15 @@ const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.i
 const SHOWCASE_1_IMAGE = '/images/store.jpg';
 
 const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FEATURED EDITORIAL IMAGES — the 4 products beside the video banner normally
+// use each product's real image. To swap in a different photo for any of the
+// 4 slots WITHOUT touching that product in the admin panel, set a path here
+// (must exist in /public/images/, e.g. '/images/editorial/1.jpg').
+// Leave an entry as null to keep using that product's real image.
+// ═══════════════════════════════════════════════════════════════════════════
+const FEATURED_EDITORIAL_IMAGES = ["/images/jacket.png", "/images/jean.png", "/images/boot.png", "/images/chain.png"];
 
 // Manual (no autoplay) paged slider — drag/swipe or click the dots to move between pages.
 // Used for the Instagram section on both mobile (1 item/page) and desktop (3 items/page).
@@ -135,34 +142,34 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
 
 export default function Home() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState(normalisedLocal);
+  const [products, setProducts] = useState([]);
   const [serverLoaded, setServerLoaded] = useState(false);
 
   const [igPosts, setIgPosts] = useState([]); // real posts added via the admin panel
+  const [igLoaded, setIgLoaded] = useState(false);
 
   useEffect(() => {
     fetchProducts()
       .then(data => {
-        if (data.success && data.products?.length > 0) {
-          setProducts(data.products);
-          setServerLoaded(true);
-        }
+        if (data.success && data.products) setProducts(data.products);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setServerLoaded(true));
   }, []);
 
   useEffect(() => {
     fetchInstagramPosts()
       .then(data => { if (data.success) setIgPosts(data.posts || []); })
-      .catch(() => {}); // fall back to the static placeholder grid below
+      .catch(() => {}) // fall back to the static placeholder grid below
+      .finally(() => setIgLoaded(true));
   }, []);
 
   const newArrivals = products.filter(p => p.isNew);
-  const saleItems = products.filter(p => p.isSale);
+  const latestProducts = [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
 
   const padToFive = (arr) => {
-    const rem = arr.length % 5;
-    return rem === 0 ? arr : [...arr, ...Array(5 - rem).fill(null)];
+    const rem = arr.length % 4;
+    return rem === 0 ? arr : [...arr, ...Array(4 - rem).fill(null)];
   };
 
   return (
@@ -180,7 +187,7 @@ export default function Home() {
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
         {/* New Arrivals */}
-        {newArrivals.length > 0 && (
+        {(!serverLoaded || newArrivals.length > 0) && (
           <div style={{ marginBottom: '3.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>New Arrivals</h2>
@@ -190,10 +197,18 @@ export default function Home() {
               </button>
             </div>
             <div className="product-grid-5">
-              {padToFive(newArrivals.slice(0, 10)).map((p, i) => p
-                ? <ProductCard key={p._id} product={p} />
-                : <div key={`ph-${i}`} className="ghost-card" />
-              )}
+              {!serverLoaded
+                ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={`na-sk-${i}`}>
+                    <div className="home-skeleton-img" />
+                    <div className="home-skeleton-line" style={{ width: '80%' }} />
+                    <div className="home-skeleton-line" style={{ width: '40%' }} />
+                  </div>
+                ))
+                : padToFive(newArrivals.slice(0, 8)).map((p, i) => p
+                  ? <ProductCard key={p._id} product={p} />
+                  : <div key={`ph-${i}`} className="ghost-card" />
+                )}
             </div>
           </div>
         )}
@@ -206,38 +221,50 @@ export default function Home() {
         image={SHOWCASE_1_IMAGE}
         title="VISIT US IN PERSON"
         lines={[
-          'In-person shopping experience — add your store address here.',
-          'Add your opening hours here.',
+           'In-person shopping experience: ', ' Third gate traffic light, Ashale Botwe. Accra,Ghana.',
+          'Monday – Saturday  11:00 AM – 8:00 PM',
         ]}
         buttonLabel="INSTAGRAM"
         buttonHref="https://instagram.com/vibewear_"
       />
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        {/* Latest */}
-        {saleItems.length > 0 && (
+        {/* Latest — most recently added products (regardless of the "New Arrival" flag), so this section always has content */}
+        {(!serverLoaded || latestProducts.length > 0) && (
           <div style={{ marginBottom: '3.5rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
               <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>Latest</h2>
-              <button onClick={() => navigate('/products?filter=sale')}
+              <button onClick={() => navigate('/products')}
                 style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
                 View All
               </button>
             </div>
             <div className="product-grid-5">
-              {padToFive(saleItems.slice(0, 5)).map((p, i) => p
-                ? <ProductCard key={p._id} product={p} />
-                : <div key={`ph-${i}`} className="ghost-card" />
-              )}
+              {!serverLoaded
+                ? Array.from({ length: 4 }).map((_, i) => (
+                  <div key={`lt-sk-${i}`}>
+                    <div className="home-skeleton-img" />
+                    <div className="home-skeleton-line" style={{ width: '80%' }} />
+                    <div className="home-skeleton-line" style={{ width: '40%' }} />
+                  </div>
+                ))
+                : padToFive(latestProducts.slice(0, 8)).map((p, i) => p
+                  ? <ProductCard key={p._id} product={p} />
+                  : <div key={`ph-${i}`} className="ghost-card" />
+                )}
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Featured editorial — 2x2 product grid + lifestyle banner. Before "Explore the Collection". ── */}
-      <FeaturedEditorial products={products.slice(0, 4)} bannerImage={'image s/store2.jpg'} bannerTitle="ZERO TO THE WORLD" bannerLink="/products" />
+      {/* ── Featured editorial — 4 products + autoplay video banner (same slot/size as before). Set bannerVideo below once you have the file. ── */}
+      <FeaturedEditorial
+        products={products.slice(0, 4).map((p, i) => FEATURED_EDITORIAL_IMAGES[i] ? { ...p, image: FEATURED_EDITORIAL_IMAGES[i] } : p)}
+        bannerVideo={"vibe.mp4"}
+        loading={!serverLoaded}
+      />
 
-      {/* ── Category showcase — between Latest and All Products. Edit categories/text via props. ── */}
+      {/* ── Category showcase — between the video banner and All Products. Edit categories/text via props. ── */}
       <CategoryShowcase dark />
 
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
@@ -251,10 +278,18 @@ export default function Home() {
             </button>
           </div>
           <div className="product-grid-5">
-            {padToFive(products.slice(0, 10)).map((p, i) => p
-              ? <ProductCard key={p._id} product={p} />
-              : <div key={`ph-${i}`} className="ghost-card" />
-            )}
+            {!serverLoaded
+              ? Array.from({ length: 8 }).map((_, i) => (
+                <div key={`sk-${i}`}>
+                  <div className="home-skeleton-img" />
+                  <div className="home-skeleton-line" style={{ width: '80%' }} />
+                  <div className="home-skeleton-line" style={{ width: '40%' }} />
+                </div>
+              ))
+              : padToFive(products.slice(0, 8)).map((p, i) => p
+                ? <ProductCard key={p._id} product={p} />
+                : <div key={`ph-${i}`} className="ghost-card" />
+              )}
           </div>
         </div>
       </div>
@@ -273,7 +308,16 @@ export default function Home() {
             </a>
           </div>
 
-          {(() => {
+          {!igLoaded ? (
+            <>
+              <div className="ig-desktop-grid ig-skeleton-grid">
+                {Array.from({ length: 3 }).map((_, i) => <div key={`ig-sk-d-${i}`} className="ig-skeleton" />)}
+              </div>
+              <div className="ig-mobile-slider ig-skeleton-grid">
+                <div className="ig-skeleton" />
+              </div>
+            </>
+          ) : (() => {
             const hasRealPosts = igPosts.length > 0;
             const igItems = hasRealPosts ? igPosts : IG_GRID_DESKTOP;
             const renderIgItem = (item, key) => hasRealPosts ? (
@@ -319,20 +363,48 @@ export default function Home() {
 
         /* Hide scrollbar for category slider */
 
-        /* 5-col on desktop, 2-col on mobile */
+        /* 4-col on desktop, 2-col on mobile */
         .product-grid-5 {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 16px;
           margin-bottom: 4rem;
         }
         .ghost-card {
           visibility: hidden;
         }
+        .home-skeleton-img {
+          aspect-ratio: 3/4;
+          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: home-shimmer 1.4s ease infinite;
+          margin-bottom: 10px;
+        }
+        .home-skeleton-line {
+          height: 10px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: home-shimmer 1.4s ease infinite;
+          margin-bottom: 6px;
+        }
+        @keyframes home-shimmer {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
 
         /* IG — IgSlider handles its own per-page grid layout inline; these just toggle visibility */
         .ig-desktop-grid { display: block; }
         .ig-mobile-slider { display: none; }
+
+        .ig-skeleton-grid.ig-desktop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; }
+        .ig-skeleton-grid.ig-mobile-slider { display: none; }
+        .ig-skeleton {
+          aspect-ratio: 1;
+          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: home-shimmer 1.4s ease infinite;
+        }
 
         @media (max-width: 1024px) {
           .product-grid-5 {
@@ -343,10 +415,12 @@ export default function Home() {
         @media (max-width: 767px) {
           .product-grid-5 {
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
           }
           .ig-desktop-grid { display: none; }
           .ig-mobile-slider { display: block; }
+          .ig-skeleton-grid.ig-desktop-grid { display: none; }
+          .ig-skeleton-grid.ig-mobile-slider { display: block; }
         }
       `}</style>
     </div>

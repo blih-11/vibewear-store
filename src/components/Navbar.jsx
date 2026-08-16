@@ -3,18 +3,36 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency, CURRENCIES } from '../context/CurrencyContext';
+import { shopCategories, allProductsEntry } from '../data/categories';
 
-export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false);
+// Emoji flags don't render reliably on every OS (notably Windows), so we use small
+// flag images from a CDN instead — falls back to the emoji glyph if no country code is set.
+function FlagIcon({ currency, size = 16 }) {
+  if (!currency?.cc) return <span style={{ fontSize: size * 0.9 }}>{currency?.flag}</span>;
+  return (
+    <img
+      src={`https://flagcdn.com/w40/${currency.cc}.png`}
+      alt={currency.code}
+      width={size}
+      height={size * 0.75}
+      style={{ objectFit: 'cover', borderRadius: '2px', display: 'inline-block', flexShrink: 0 }}
+    />
+  );
+}
+
+export default function Navbar() {  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [currencyOpen, setCurrencyOpen] = useState(false);
+  const [shopOpen, setShopOpen] = useState(false);       // desktop dropdown
+  const [mobileShopOpen, setMobileShopOpen] = useState(false); // mobile accordion
   const [photoError, setPhotoError] = useState(false); // fall back to the default icon if the Google photo URL fails to load
   const { cartCount, setSearchOpen } = useCart();
   const { user, logout } = useAuth();
   const { currency, setCurrency, currentCurrency } = useCurrency();
   const location = useLocation();
   const accountRef = useRef(null);
+  const shopRef = useRef(null);
 
   const isHome = location.pathname === '/';
 
@@ -30,11 +48,19 @@ export default function Navbar() {
   }, [isHome]);
 
   useEffect(() => { setPhotoError(false); }, [user?.photoURL]);
-  useEffect(() => { setMenuOpen(false); }, [location]);
+  useEffect(() => { setMenuOpen(false); setMobileShopOpen(false); }, [location]);
   useEffect(() => {
     document.body.style.overflow = menuOpen ? 'hidden' : '';
     return () => { document.body.style.overflow = ''; };
   }, [menuOpen]);
+
+  // Close the desktop Shop dropdown on outside click
+  useEffect(() => {
+    if (!shopOpen) return;
+    const onClick = (e) => { if (shopRef.current && !shopRef.current.contains(e.target)) setShopOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [shopOpen]);
 
   // Close the mobile sidebar automatically if the viewport is resized (or
   // rotated) up past the mobile breakpoint, so it doesn't stay stuck open.
@@ -46,12 +72,8 @@ export default function Navbar() {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
-  const navLinks = [
-    { to: '/', label: 'Home' },
-    { to: '/products', label: 'Shop' },
-    { to: '/contact', label: 'Contact' },
-  ];
   const isActive = (to) => location.pathname === to;
+  const isShopActive = location.pathname.startsWith('/products');
 
   // The mobile menu panel is white and sits behind the top bar, so once it's open the bar
   // needs the same "scrolled" (white bg, dark icons/logo) treatment even if scrolled === false —
@@ -75,19 +97,68 @@ export default function Navbar() {
         {/* LEFT */}
         <div className="zttw-nav__left">
           <div className="zttw-nav__links">
-            {navLinks.map(link => (
-              <Link
-                key={link.to}
-                to={link.to}
+            <Link
+              to="/"
+              className="zttw-nav__link"
+              style={{ color: iconColor, borderBottomColor: isActive('/') ? iconColor : 'transparent' }}
+            >
+              Home
+            </Link>
+
+            <Link
+              to="/products"
+              className="zttw-nav__link"
+              style={{ color: iconColor, borderBottomColor: isActive('/products') ? iconColor : 'transparent' }}
+            >
+              {allProductsEntry.label}
+            </Link>
+
+            {/* Shop dropdown — categories only, All Products lives as its own nav link above */}
+            <div ref={shopRef} style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShopOpen(o => !o)}
                 className="zttw-nav__link"
                 style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  font: 'inherit', display: 'flex', alignItems: 'center', gap: '5px',
                   color: iconColor,
-                  borderBottomColor: isActive(link.to) ? iconColor : 'transparent',
+                  borderBottomColor: (isShopActive || shopOpen) ? iconColor : 'transparent',
                 }}
               >
-                {link.label}
-              </Link>
-            ))}
+                Shop
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                  style={{ transform: shopOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+
+              {shopOpen && (
+                <div style={{
+                  position: 'absolute', top: 'calc(100% + 14px)', left: 0,
+                  background: '#fff', border: '1px solid #e5e5e5',
+                  minWidth: '200px', zIndex: 150,
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.12)', padding: '8px 0',
+                }}>
+                  {shopCategories.map(cat => (
+                    <Link key={cat.id} to={`/products?filter=${cat.id}`} onClick={() => setShopOpen(false)}
+                      style={{ display: 'block', padding: '8px 18px', color: '#555', textDecoration: 'none', fontSize: '0.78rem', letterSpacing: '0.03em' }}
+                      onMouseEnter={e => { e.currentTarget.style.background = '#f7f7f7'; e.currentTarget.style.color = '#000'; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#555'; }}
+                    >
+                      {cat.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link
+              to="/contact"
+              className="zttw-nav__link"
+              style={{ color: iconColor, borderBottomColor: isActive('/contact') ? iconColor : 'transparent' }}
+            >
+              Contact
+            </Link>
           </div>
 
           <button
@@ -105,6 +176,7 @@ export default function Navbar() {
         <div className="zttw-nav__center">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <img
+              style={{height: "50px"}}
               src={effectiveScrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
               alt="Vibe Wear"
               className="zttw-nav__logo"
@@ -122,7 +194,7 @@ export default function Navbar() {
               fontFamily: 'var(--font-body)', fontSize: '0.72rem',
               color: iconColor, transition: 'color 0.3s ease',
             }}>
-              <span>{currentCurrency.flag}</span>
+              <FlagIcon currency={currentCurrency} size={16} />
               <span>{currency}</span>
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
                 style={{ transform: currencyOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
@@ -147,7 +219,7 @@ export default function Navbar() {
                         background: currency === cur.code ? '#f5f5f5' : 'transparent',
                         cursor: 'pointer', color: currency === cur.code ? '#000' : '#666',
                       }}>
-                      <span style={{ fontSize: '1rem' }}>{cur.flag}</span>
+                      <FlagIcon currency={cur} size={18} />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', flex: 1, textAlign: 'left' }}>{cur.code}</span>
                       {currency === cur.code && (
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="m5 12 5 5 9-9"/></svg>
@@ -232,30 +304,81 @@ export default function Navbar() {
 
       {/* ── MOBILE FULL-SCREEN MENU ── */}
       <div className={`zttw-mobile-menu${menuOpen ? ' zttw-mobile-menu--open' : ''}`}>
+        {mobileShopOpen ? (
+          /* ── SHOP sub-page — replaces the whole menu content, matching the reference layout ── */
+          <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '0.5rem 1.5rem 1.25rem',
+            }}>
+              <button onClick={() => setMobileShopOpen(false)} aria-label="Back"
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#000', padding: '4px', display: 'flex' }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 18l-6-6 6-6"/></svg>
+              </button>
+              <span style={{ fontSize: '0.85rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>
+                Shop
+              </span>
+              <span style={{ width: '30px' }} />
+            </div>
+
+            <div style={{ padding: '0 1.5rem', overflowY: 'auto', flex: 1 }}>
+              {shopCategories.map(cat => (
+                <Link key={cat.id} to={`/products?filter=${cat.id}`} onClick={() => setMenuOpen(false)}
+                  style={{ display: 'block', padding: '1rem 0', borderBottom: '1px solid #e0e0e0', color: '#333', textDecoration: 'none', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  {cat.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        ) : (
+        <>
         <div style={{ padding: '0 1.5rem', flex: 1 }}>
-          {navLinks.map(link => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMenuOpen(false)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '1.1rem 0',
-                borderBottom: '1px solid #e0e0e0',
-                textDecoration: 'none',
-                fontFamily: 'var(--font-display)',
-                fontSize: 'clamp(2rem, 9vw, 3.4rem)',
-                fontWeight: 700,
-                color: '#000',
-                letterSpacing: '-0.01em',
-              }}
-            >
-              <span>{link.label}</span>
-              <span style={{ color: '#999', fontSize: '1.3rem' }}>→</span>
-            </Link>
-          ))}
+          <Link
+            to="/"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'block', padding: '1rem 0', borderBottom: '1px solid #e0e0e0', textDecoration: 'none',
+              color: '#333', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Home
+          </Link>
+
+          <Link
+            to="/products"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'block', padding: '1rem 0', borderBottom: '1px solid #e0e0e0', textDecoration: 'none',
+              color: '#333', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            {allProductsEntry.label}
+          </Link>
+
+          {/* Shop — opens a dedicated full sub-page (see mobileShopOpen branch above) */}
+          <button
+            onClick={() => setMobileShopOpen(true)}
+            style={{
+              width: '100%', display: 'block', textAlign: 'left',
+              padding: '1rem 0', borderBottom: '1px solid #e0e0e0',
+              background: 'none', border: 'none', borderBottomStyle: 'solid', borderBottomWidth: '1px', borderBottomColor: '#e0e0e0',
+              cursor: 'pointer',
+              color: '#333', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Shop
+          </button>
+
+          <Link
+            to="/contact"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'block', padding: '1rem 0', borderBottom: '1px solid #e0e0e0', textDecoration: 'none',
+              color: '#333', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Contact
+          </Link>
         </div>
         {/* Account / sign in — was desktop-only before, now visible on mobile too */}
         <div style={{ padding: '1.25rem 1.5rem', borderTop: '1px solid #e0e0e0' }}>
@@ -294,10 +417,12 @@ export default function Navbar() {
                 fontSize: '0.72rem', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', gap: '4px',
               }}>
-              {cur.flag} {cur.code}
+              <FlagIcon currency={cur} size={14} /> {cur.code}
             </button>
           ))}
         </div>
+        </>
+        )}
       </div>
 
       <style>{`

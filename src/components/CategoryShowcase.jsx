@@ -2,15 +2,15 @@ import { Link } from 'react-router-dom';
 
 export default function CategoryShowcase({
   eyebrow = 'SHOP BY CATEGORY',
-  heading = 'Explore the Collection',
+  heading = 'Explore Collection',
   subtext = 'Every piece is thoughtfully designed to reflect confidence, purpose, and timeless streetwear style.',
   // Fixed images — not pulled from live product data. Set `image` on each entry
   // to a real path (e.g. '/images/categories/shirts.jpg'); leave null for the placeholder.
   categories = [
-    { id: 'shirts',      label: 'Shirts',      image: 'images/products/img_200.jpg' },
-    { id: 'hoodies',     label: 'Caps',     image: 'images/products/img_94.jpg' },
-    { id: 'bottoms',     label: 'Bottoms',     image: 'images/products/img_83.jpg' },
-    { id: 'accessories', label: 'Accessories', image: 'images/products/img_68.jpg' },
+    { id: 'tees',        label: 'Graphic Tees', blurb: 'Bold prints, boxy cuts, heavy cotton',    image: 'images/products/img_200.jpg' },
+    { id: 'bottoms',     label: 'Bottoms',       blurb: 'Denim, cargo shorts, wide-leg',           image: 'images/products/img_83.jpg' },
+    { id: 'outerwear',   label: 'Outerwear',     blurb: 'Hoodies, jackets, statement pieces',      image: 'images/products/img_94.jpg' },
+    { id: 'new-arrivals',label: 'Accessories',  blurb: 'Latest drops — move fast',                image: 'images/products/img_68.jpg' },
   ],
   dark = false,          // set true to render on a black background with white text
   noTopBorder = false,   // set true when stacking directly under another dark section, to avoid a seam
@@ -50,6 +50,7 @@ export default function CategoryShowcase({
                 aspectRatio: '3/4',
                 display: 'block',
                 overflow: 'hidden',
+                borderRadius: '16px',
                 background: dark ? '#111' : '#f2f2f2',
                 textDecoration: 'none',
               }}
@@ -79,14 +80,16 @@ export default function CategoryShowcase({
               {/* Bottom gradient scrim so the label stays readable over any photo */}
               <div style={{
                 position: 'absolute', inset: 0,
-                background: 'linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0) 70%)',
+                background: 'linear-gradient(to top, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.35) 40%, rgba(0,0,0,0) 68%)',
               }} />
 
               <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '1.1rem' }}>
                 <p style={{ color: '#fff', fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.3rem' }}>{cat.label}</p>
-                <span style={{ color: '#fff', opacity: 0.85, fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
-                  Explore Collection →
-                </span>
+                {cat.blurb && (
+                  <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.76rem', lineHeight: 1.4, maxWidth: '85%' }}>
+                    {cat.blurb}
+                  </p>
+                )}
               </div>
             </Link>
           ))}
@@ -105,7 +108,7 @@ export default function CategoryShowcase({
           .cat-showcase-grid { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 480px) {
-          .cat-showcase-grid { grid-template-columns: 1fr; }
+          .cat-showcase-grid { gap: 10px; }
         }
       `}</style>
     </section>

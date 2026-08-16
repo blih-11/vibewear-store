@@ -1,16 +1,16 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 
 export const CURRENCIES = [
-  { code: 'GHS', symbol: '₵', name: 'Ghana Cedi',          flag: '🇬🇭', locale: 'en-GH' },
-  { code: 'USD', symbol: '$', name: 'US Dollar',            flag: '🇺🇸', locale: 'en-US' },
-  { code: 'GBP', symbol: '£', name: 'British Pound',        flag: '🇬🇧', locale: 'en-GB' },
-  { code: 'EUR', symbol: '€', name: 'Euro',                 flag: '🇪🇺', locale: 'de-DE' },
-  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira',       flag: '🇳🇬', locale: 'en-NG' },
-  { code: 'ZAR', symbol: 'R', name: 'South African Rand',   flag: '🇿🇦', locale: 'en-ZA' },
-  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar',    flag: '🇨🇦', locale: 'en-CA' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar',   flag: '🇦🇺', locale: 'en-AU' },
-  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling',    flag: '🇰🇪', locale: 'sw-KE' },
-  { code: 'XOF', symbol: 'CFA', name: 'West African CFA',   flag: '🌍', locale: 'fr-SN' },
+  { code: 'GHS', symbol: '₵', name: 'Ghana Cedi',          flag: '🇬🇭', cc: 'gh', locale: 'en-GH' },
+  { code: 'USD', symbol: '$', name: 'US Dollar',            flag: '🇺🇸', cc: 'us', locale: 'en-US' },
+  { code: 'GBP', symbol: '£', name: 'British Pound',        flag: '🇬🇧', cc: 'gb', locale: 'en-GB' },
+  { code: 'EUR', symbol: '€', name: 'Euro',                 flag: '🇪🇺', cc: 'eu', locale: 'de-DE' },
+  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira',       flag: '🇳🇬', cc: 'ng', locale: 'en-NG' },
+  { code: 'ZAR', symbol: 'R', name: 'South African Rand',   flag: '🇿🇦', cc: 'za', locale: 'en-ZA' },
+  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar',    flag: '🇨🇦', cc: 'ca', locale: 'en-CA' },
+  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar',   flag: '🇦🇺', cc: 'au', locale: 'en-AU' },
+  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling',    flag: '🇰🇪', cc: 'ke', locale: 'sw-KE' },
+  { code: 'XOF', symbol: 'CFA', name: 'West African CFA',   flag: '🌍', cc: 'sn', locale: 'fr-SN' },
 ];
 
 // Country code → currency code map for auto-detection

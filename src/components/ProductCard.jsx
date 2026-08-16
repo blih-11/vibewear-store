@@ -41,17 +41,16 @@ export default function ProductCard({ product }) {
     if (wasDragging.current) { wasDragging.current = false; return; }
     navigate(`/products/${product._id || product.id}`);
   };
-  const goPrev = (e) => { e.preventDefault(); e.stopPropagation(); setImgIndex(i => clamp(i - 1)); };
-  const goNext = (e) => { e.preventDefault(); e.stopPropagation(); setImgIndex(i => clamp(i + 1)); };
 
   return (
     <div
       onClick={handleCardClick}
-      style={{ cursor: 'pointer' }}
+      style={{ cursor: 'pointer', borderTop: '1px solid #ddd', paddingTop: '14px' }}
     >
-      {/* Image — narrower + centered so the plain backdrop in the source photos reads less like a solid box */}
+      {/* Image — narrower + centered on desktop so the plain backdrop in the source photos reads less like a solid box; near full-bleed on mobile so it reads bigger on small screens */}
       <div
-        style={{ position: 'relative', width: '86%', margin: '0 auto', aspectRatio: '3/4', overflow: 'hidden', background: 'transparent', touchAction: 'pan-y', userSelect: 'none' }}
+        className="product-card-img-wrap"
+        style={{ position: 'relative', aspectRatio: '3/4', overflow: 'hidden', background: 'transparent', touchAction: 'pan-y', userSelect: 'none' }}
         onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}
         onDragStart={e => e.preventDefault()}
       >
@@ -71,30 +70,6 @@ export default function ProductCard({ product }) {
 
         {images.length > 1 && (
           <>
-            {/* Explicit prev/next arrows — always work regardless of drag/gesture detection */}
-            {imgIndex > 0 && (
-              <button onClick={goPrev} aria-label="Previous image"
-                style={{
-                  position: 'absolute', left: '6px', top: '50%', transform: 'translateY(-50%)',
-                  width: '24px', height: '24px', borderRadius: '50%', border: 'none',
-                  background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', padding: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-                }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3"><path d="M15 18l-6-6 6-6"/></svg>
-              </button>
-            )}
-            {imgIndex < images.length - 1 && (
-              <button onClick={goNext} aria-label="Next image"
-                style={{
-                  position: 'absolute', right: '6px', top: '50%', transform: 'translateY(-50%)',
-                  width: '24px', height: '24px', borderRadius: '50%', border: 'none',
-                  background: 'rgba(255,255,255,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', padding: 0, boxShadow: '0 1px 4px rgba(0,0,0,0.25)',
-                }}>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="3"><path d="M9 18l6-6-6-6"/></svg>
-              </button>
-            )}
-
             {/* Dots */}
             <div style={{ position: 'absolute', bottom: '8px', left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: '4px' }}>
               {images.map((_, i) => (
@@ -124,11 +99,11 @@ export default function ProductCard({ product }) {
 
       {/* Info — no card chrome, just image + name + price + stock status */}
       <div style={{ padding: '10px 7% 0' }}>
-        <h3 style={{ color: '#000', fontSize: '0.82rem', fontWeight: 500, marginBottom: '4px', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+        <h3 style={{ color: '#000', fontSize: '0.82rem', fontWeight: 400, marginBottom: '3px', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
           {product?.name || 'Unnamed Product'}
         </h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ color: '#000', fontWeight: 700, fontSize: '0.9rem' }}>{formatPrice(price)}</span>
+          <span style={{ color: '#888', fontWeight: 400, fontSize: '0.82rem' }}>{formatPrice(price)}</span>
           {originalPrice && (
             <span style={{ color: '#aaa', fontSize: '0.8rem', textDecoration: 'line-through' }}>{formatPrice(originalPrice)}</span>
           )}
@@ -137,6 +112,18 @@ export default function ProductCard({ product }) {
           {product?.inStock ? '● In Stock' : '● Out of Stock'}
         </div>
       </div>
+
+      <style>{`
+        .product-card-img-wrap {
+          width: 86%;
+          margin: 0 auto;
+        }
+        @media (max-width: 767px) {
+          .product-card-img-wrap {
+            width: 100%;
+          }
+        }
+      `}</style>
     </div>
   );
 }

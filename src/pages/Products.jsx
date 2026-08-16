@@ -1,40 +1,47 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../lib/api';
-import { products as localProducts } from '../data/products';
+import { shopCategories, allProductsEntry } from '../data/categories';
 
-const normalisedLocal = localProducts.map(p => ({ ...p, _id: p._id || String(p.id) }));
+const allCategories = [allProductsEntry, ...shopCategories];
 
-const allCategories = [
-  { id: 'all',          label: 'All' },
-  { id: 'new-arrivals', label: 'New Arrivals' },
-  { id: 'sale',         label: 'Sale' },
-  { id: 'tees',         label: 'Tees' },
-  { id: 'shirts',       label: 'Shirts' },
-  { id: 'hoodies',      label: 'Hoodies' },
-  { id: 'bottoms',      label: 'Bottoms' },
-  { id: 'outerwear',    label: 'Outerwear' },
-  { id: 'accessories',  label: 'Accessories' },
-  { id: 'fullfit',      label: 'Full Fits' },
+const sortOptions = [
+  { id: 'default',    label: 'Featured' },
+  { id: 'best',       label: 'Best Selling' },
+  { id: 'price-asc',  label: 'Price, Low To High' },
+  { id: 'price-desc', label: 'Price, High To Low' },
+  { id: 'date-old',   label: 'Date, Old To New' },
+  { id: 'date-new',   label: 'Date, New To Old' },
 ];
 
 export default function Products() {
   const [searchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState(searchParams.get('filter') || 'all');
   const [sort, setSort] = useState('default');
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
   const [localSearch, setLocalSearch] = useState('');
-  const [products, setProducts] = useState(normalisedLocal);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!sortOpen) return;
+    const onClick = (e) => { if (sortRef.current && !sortRef.current.contains(e.target)) setSortOpen(false); };
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [sortOpen]);
 
   useEffect(() => {
     const f = searchParams.get('filter');
-    if (f) setActiveFilter(f);
+    setActiveFilter(f || 'all');
   }, [searchParams]);
 
   useEffect(() => {
     fetchProducts()
-      .then(data => { if (data.success && data.products?.length) setProducts(data.products); })
-      .catch(() => {});
+      .then(data => { if (data.success && data.products) setProducts(data.products); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const filtered = useMemo(() => {
@@ -52,15 +59,18 @@ export default function Products() {
     else if (activeFilter !== 'all') list = list.filter(p => p.category?.includes(activeFilter));
     if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
     else if (sort === 'price-desc') list.sort((a, b) => b.price - a.price);
-    else if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);
-    else if (sort === 'newest') list.sort((a, b) => (b.isNew ? 1 : 0) - (a.isNew ? 1 : 0));
+    else if (sort === 'best') list.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    else if (sort === 'alpha-asc') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    else if (sort === 'alpha-desc') list.sort((a, b) => (b.name || '').localeCompare(a.name || ''));
+    else if (sort === 'date-old') list.sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    else if (sort === 'date-new') list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
     return list;
   }, [activeFilter, sort, localSearch, products]);
 
-  // Pad to complete 5-col rows
+  // Pad to complete 4-col rows
   const paddedFiltered = useMemo(() => {
-    const rem = filtered.length % 5;
-    return rem === 0 ? filtered : [...filtered, ...Array(5 - rem).fill(null)];
+    const rem = filtered.length % 4;
+    return rem === 0 ? filtered : [...filtered, ...Array(4 - rem).fill(null)];
   }, [filtered]);
 
   return (
@@ -69,12 +79,16 @@ export default function Products() {
 
         {/* Header */}
         <div style={{ marginBottom: '2rem', paddingTop: '1rem' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#000', letterSpacing: '0.04em' }}>Shop</h1>
-          <p style={{ color: '#aaa', fontSize: '0.82rem', marginTop: '4px' }}>{filtered.length} products</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#000', letterSpacing: '0.04em' }}>
+            {allCategories.find(c => c.id === activeFilter)?.label || 'Shop'}
+          </h1>
+          <p style={{ color: '#aaa', fontSize: '0.82rem', marginTop: '4px' }}>
+            {loading ? 'Loading products...' : `${filtered.length} products`}
+          </p>
         </div>
 
         {/* Search + Sort */}
-        <div style={{ display: 'flex', gap: '12px', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '2rem', flexWrap: 'wrap' }}>
           <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
             <svg style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#aaa' }}
               width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,55 +102,104 @@ export default function Products() {
               onBlur={e => e.target.style.borderColor = '#e5e5e5'}
             />
           </div>
-          <select value={sort} onChange={e => setSort(e.target.value)}
-            style={{ border: '1px solid #e5e5e5', borderRadius: '2px', padding: '10px 14px', fontSize: '0.82rem', color: '#555', background: '#fff', cursor: 'pointer', outline: 'none', fontFamily: 'inherit' }}>
-            <option value="default">Sort: Default</option>
-            <option value="newest">Newest First</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="rating">Top Rated</option>
-          </select>
-        </div>
-
-        {/* Category Filters */}
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '2rem' }}>
-          {allCategories.map(cat => (
-            <button key={cat.id} onClick={() => setActiveFilter(cat.id)}
+          <div ref={sortRef} style={{ position: 'relative' }}>
+            <button
+              onClick={() => setSortOpen(o => !o)}
               style={{
-                padding: '7px 18px', borderRadius: '2px',
-                border: '1px solid',
-                borderColor: activeFilter === cat.id ? '#000' : '#e0e0e0',
-                background: activeFilter === cat.id ? '#000' : '#fff',
-                color: activeFilter === cat.id ? '#fff' : '#555',
-                fontSize: '0.72rem', fontWeight: 600,
-                letterSpacing: '0.1em', textTransform: 'uppercase',
-                cursor: 'pointer', transition: 'all 0.18s',
-              }}>
-              {cat.label}
+                display: 'flex', alignItems: 'center', gap: '10px',
+                border: '1px solid #e5e5e5', borderRadius: '2px',
+                padding: '10px 16px', background: '#fff', cursor: 'pointer',
+                fontFamily: 'inherit', fontSize: '0.78rem', fontWeight: 600,
+                letterSpacing: '0.1em', textTransform: 'uppercase', color: '#000',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Sort By
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+                style={{ transform: sortOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
+                <path d="m6 9 6 6 6-6"/>
+              </svg>
             </button>
-          ))}
+
+            {sortOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 10px)', right: 0, zIndex: 120,
+                background: '#fff', border: '1px solid #e5e5e5',
+                minWidth: '250px', padding: '10px 0',
+                boxShadow: '0 12px 32px rgba(0,0,0,0.1)',
+              }}>
+                {sortOptions.map(o => (
+                  <button key={o.id} onClick={() => { setSort(o.id); setSortOpen(false); }}
+                    style={{
+                      display: 'block', width: '100%', textAlign: 'left',
+                      padding: '11px 22px', background: sort === o.id ? 'rgba(0,0,0,0.045)' : 'transparent',
+                      border: 'none', cursor: 'pointer', fontFamily: 'inherit',
+                      fontSize: '0.92rem', color: '#222',
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(0,0,0,0.045)'}
+                    onMouseLeave={e => e.currentTarget.style.background = sort === o.id ? 'rgba(0,0,0,0.045)' : 'transparent'}
+                  >
+                    {o.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Products Grid */}
-        <div className="shop-grid-5">
-          {paddedFiltered.map((product, i) =>
-            product
-              ? <ProductCard key={product._id} product={product} />
-              : <div key={`ph-${i}`} style={{ visibility: 'hidden' }} />
-          )}
-        </div>
-
-        {filtered.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '5rem 0', color: '#aaa', fontSize: '0.9rem' }}>
-            No products found.
+        {loading ? (
+          <div className="shop-grid-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={`sk-${i}`}>
+                <div className="shop-skeleton-img" />
+                <div className="shop-skeleton-line" style={{ width: '80%' }} />
+                <div className="shop-skeleton-line" style={{ width: '40%' }} />
+              </div>
+            ))}
           </div>
+        ) : (
+          <>
+            <div className="shop-grid-5">
+              {paddedFiltered.map((product, i) =>
+                product
+                  ? <ProductCard key={product._id} product={product} />
+                  : <div key={`ph-${i}`} style={{ visibility: 'hidden' }} />
+              )}
+            </div>
+
+            {filtered.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '5rem 0', color: '#aaa', fontSize: '0.9rem' }}>
+                No products found.
+              </div>
+            )}
+          </>
         )}
       </div>
 
       <style>{`
+        .shop-skeleton-img {
+          aspect-ratio: 3/4;
+          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: shop-shimmer 1.4s ease infinite;
+          margin-bottom: 10px;
+        }
+        .shop-skeleton-line {
+          height: 10px;
+          border-radius: 2px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
+          background-size: 400% 100%;
+          animation: shop-shimmer 1.4s ease infinite;
+          margin-bottom: 6px;
+        }
+        @keyframes shop-shimmer {
+          0% { background-position: 100% 50%; }
+          100% { background-position: 0 50%; }
+        }
         .shop-grid-5 {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(4, 1fr);
           gap: 16px;
         }
         @media (max-width: 1024px) {
@@ -145,7 +208,7 @@ export default function Products() {
         @media (max-width: 767px) {
           .shop-grid-5 {
             grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
+            gap: 8px;
           }
         }
       `}</style>

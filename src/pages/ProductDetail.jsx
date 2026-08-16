@@ -4,7 +4,6 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import StarRating from '../components/StarRating';
 import ProductCard from '../components/ProductCard';
-import { products as localProducts } from '../data/products';
 import PageLoader from '../components/PageLoader';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
@@ -44,17 +43,13 @@ export default function ProductDetail() {
           return fetch(`${BASE}/products`)
             .then(r => r.json())
             .then(all => {
-              applyProduct(data.product, all.success ? all.products : localProducts);
+              applyProduct(data.product, all.success ? all.products : []);
             });
         }
-        // Server responded but no product — try local
-        const local = localProducts.find(p => String(p.id) === String(id) || String(p._id) === String(id));
-        if (local) applyProduct(local, localProducts);
+        setProduct(null);
       })
       .catch(() => {
-        // Server down — use local data
-        const local = localProducts.find(p => String(p.id) === String(id) || String(p._id) === String(id));
-        if (local) applyProduct(local, localProducts);
+        setProduct(null);
       })
       .finally(() => setLoading(false));
   }, [id]);

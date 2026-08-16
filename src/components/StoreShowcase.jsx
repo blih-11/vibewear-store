@@ -7,8 +7,8 @@ export default function StoreShowcase({
   image =  'images/store.jpg', // pass a real photo path, e.g. "/images/store-front.jpg" — leave blank to show an "add photo" placeholder
   title = 'VISIT US IN PERSON',
   lines = [
-    'In-person shopping experience — add your store address here.',
-    'Add your opening hours here.',
+    'STORE LOCATION: Third gate traffic light, Ashale Botwe. Accra,Ghana.',
+    'OPENING HOURS: 9:00 AM - 6:00 PM, Mon - Sat',
   ],
   buttonLabel = 'INSTAGRAM',
   buttonHref = 'https://instagram.com/vibewear_',
