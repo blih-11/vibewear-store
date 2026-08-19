@@ -1,31 +1,31 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import StarRating from '../components/StarRating';
 import ProductCard from '../components/ProductCard';
 import PageLoader from '../components/PageLoader';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
+const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
+const BRAND_LABEL = 'Vibe Wear';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { requestAddToCart, setCartOpen } = useCart();
+  const { requestAddToCart } = useCart();
   const { formatPrice } = useCurrency();
 
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedSize, setSelectedSize] = useState(null);
-  const [selectedColor, setSelectedColor] = useState(null);
   const [selectedImg, setSelectedImg] = useState(0);
-  const [sizeError, setSizeError] = useState(false);
-  const [colorError, setColorError] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const imgRefs = useRef([]);
 
   useEffect(() => {
     setLoading(true);
-    setSelectedSize(null); setSelectedColor(null); setSelectedImg(0);
+    setSelectedSize(null); setSelectedImg(0); setQuantity(1);
 
     const applyProduct = (prod, allProds) => {
       setProduct(prod);
@@ -63,31 +63,30 @@ export default function ProductDetail() {
     </div>
   );
 
-  const discount = product.originalPrice ? Math.round((1 - product.price / product.originalPrice) * 100) : null;
   const images = product.images?.length > 0 ? product.images : [product.image];
 
-  const handleAddToCart = () => {
-    if (!selectedSize) { setSizeError(true); return; }
-    if (!selectedColor) { setColorError(true); return; }
-    setSizeError(false); setColorError(false);
-    requestAddToCart(product, selectedSize, selectedColor);
+  const jumpToImage = (i) => {
+    setSelectedImg(i);
+    imgRefs.current[i]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  const btnStyle = (selected, error) => ({
-    padding: '8px 16px', borderRadius: '2px', border: '1px solid',
-    borderColor: error ? '#ef4444' : selected ? '#000' : '#e5e5e5',
-    background: selected ? '#000' : '#fff',
-    color: selected ? '#fff' : '#555',
-    cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600,
-    transition: 'all 0.15s',
-  });
+  const handleAddToCart = () => {
+    requestAddToCart(product, selectedSize, null, quantity);
+  };
+
+  // Bullet-point description lines, e.g. "*100% Cotton" / "*Boxy Fit" — split on newlines,
+  // falling back to sentence-splitting if the admin entered it as one paragraph.
+  const descLines = (product.description || '')
+    .split(/\r?\n/)
+    .flatMap(line => line.trim() ? line.split(/(?<=[.])\s+(?=[A-Z*])/) : [])
+    .map(l => l.trim())
+    .filter(Boolean);
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '2rem 1.5rem' }}>
-
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem 0' }}>
         {/* Breadcrumb */}
-        <nav style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '2rem', fontSize: '0.75rem', color: '#aaa' }}>
+        <nav style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.75rem', color: '#aaa' }}>
           <button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#aaa', padding: 0 }}
             onMouseEnter={e => e.target.style.color = '#000'} onMouseLeave={e => e.target.style.color = '#aaa'}>Home</button>
           <span>/</span>
@@ -96,20 +95,51 @@ export default function ProductDetail() {
           <span>/</span>
           <span style={{ color: '#000', fontWeight: 500 }}>{product.name}</span>
         </nav>
+      </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', marginBottom: '5rem' }} className="product-grid">
+      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '0 1.5rem 5rem' }}>
+        <div className="pd-grid">
 
-          {/* Images */}
-          <div>
-            <div style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8', marginBottom: '8px' }}>
+          {/* ── Desktop gallery: vertical thumbnail rail (one per photo) + stacked full images ── */}
+          <div className="pd-gallery pd-gallery-desktop">
+            {images.length > 1 && (
+              <div className="pd-thumbs">
+                {images.map((img, i) => (
+                  <button key={i} onClick={() => jumpToImage(i)}
+                    style={{
+                      width: '100%', aspectRatio: '3/4', overflow: 'hidden', padding: 0, cursor: 'pointer',
+                      border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
+                    }}>
+                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            <div className="pd-main-images">
+              {images.map((img, i) => (
+                <div key={i} ref={el => imgRefs.current[i] = el}
+                  style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
+                  <img src={img} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Mobile gallery: one large main image + horizontal thumbnail strip below ── */}
+          <div className="pd-gallery-mobile">
+            <div style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
               <img src={images[selectedImg] || product.image} alt={product.name}
                 style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
             </div>
             {images.length > 1 && (
-              <div style={{ display: 'flex', gap: '6px' }}>
+              <div className="pd-thumbs-mobile">
                 {images.map((img, i) => (
                   <button key={i} onClick={() => setSelectedImg(i)}
-                    style={{ width: '72px', height: '88px', overflow: 'hidden', border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8', padding: 0, cursor: 'pointer', borderRadius: '2px' }}>
+                    style={{
+                      width: '64px', height: '80px', flexShrink: 0, overflow: 'hidden', padding: 0, cursor: 'pointer',
+                      border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
+                    }}>
                     <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
@@ -117,86 +147,97 @@ export default function ProductDetail() {
             )}
           </div>
 
-          {/* Info */}
-          <div>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-              {product.isNew && <span style={{ background: '#000', color: '#fff', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em', textTransform: 'uppercase' }}>NEW</span>}
-              {discount && <span style={{ background: '#f5f5f5', color: '#000', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em' }}>-{discount}% OFF</span>}
-              {!product.inStock && <span style={{ background: '#f5f5f5', color: '#888', fontSize: '10px', fontWeight: 700, padding: '3px 10px', letterSpacing: '0.08em' }}>SOLD OUT</span>}
-            </div>
+          {/* ── Info ── */}
+          <div className="pd-info">
+            <p style={{ fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#888', marginBottom: '6px' }}>{BRAND_LABEL}</p>
+            <h1 style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.02em', textTransform: 'uppercase', color: '#000', lineHeight: 1.3, marginBottom: '10px' }}>{product.name}</h1>
+            <p style={{ fontSize: '1rem', color: '#000', marginBottom: '18px' }}>
+              {formatPrice(product.price)}
+            </p>
 
-            <h1 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#000', lineHeight: 1.2, marginBottom: '10px' }}>{product.name}</h1>
-            <div style={{ marginBottom: '16px' }}><StarRating rating={product.rating} reviews={product.reviews} size="md" /></div>
-
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', marginBottom: '6px' }}>
-              <span style={{ fontSize: '1.6rem', fontWeight: 800, color: '#000' }}>{formatPrice(product.price)}</span>
-              {product.originalPrice && <span style={{ fontSize: '1rem', color: '#aaa', textDecoration: 'line-through' }}>{formatPrice(product.originalPrice)}</span>}
-            </div>
-            <div style={{ fontSize: '12px', fontWeight: 700, color: product.inStock ? '#22c55e' : '#ef4444', marginBottom: '24px', letterSpacing: '0.06em' }}>
-              {product.inStock ? '● In Stock' : '● Out of Stock'}
-            </div>
-
-            {/* Color */}
-            <div style={{ marginBottom: '20px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  Color {selectedColor && <span style={{ fontWeight: 400, color: '#888' }}>— {selectedColor}</span>}
-                </label>
-                {colorError && <span style={{ color: '#ef4444', fontSize: '0.72rem' }}>Select a color</span>}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {product.colors?.map(color => (
-                  <button key={color} onClick={() => { setSelectedColor(color); setColorError(false); }}
-                    style={btnStyle(selectedColor === color, colorError && !selectedColor)}>
-                    {color}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <div style={{ borderTop: '1px solid #eee', marginBottom: '20px' }} />
 
             {/* Size */}
-            <div style={{ marginBottom: '28px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-                  Size {selectedSize && <span style={{ fontWeight: 400, color: '#888' }}>— {selectedSize}</span>}
-                </label>
-                {sizeError && <span style={{ color: '#ef4444', fontSize: '0.72rem' }}>Select a size</span>}
+            {product.sizes?.length > 0 && (
+              <div style={{ marginBottom: '22px' }}>
+                <p style={{ fontSize: '0.8rem', color: '#000', marginBottom: '10px' }}>
+                  Size{selectedSize ? `: ${selectedSize}` : ''} <span style={{ color: '#aaa' }}>(optional)</span>
+                </p>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                  {ALL_SIZES.map(size => {
+                    const available = product.sizes.includes(size);
+                    const selected = selectedSize === size;
+                    return (
+                      <button key={size} disabled={!available}
+                        onClick={() => setSelectedSize(size)}
+                        style={{
+                          position: 'relative', width: '48px', height: '40px',
+                          border: '1px solid', borderColor: selected ? '#000' : '#e5e5e5',
+                          background: selected ? '#000' : '#fff',
+                          color: available ? (selected ? '#fff' : '#000') : '#ccc',
+                          fontSize: '0.8rem', fontWeight: 500,
+                          cursor: available ? 'pointer' : 'not-allowed',
+                          overflow: 'hidden',
+                        }}>
+                        {size}
+                        {!available && (
+                          <span style={{
+                            position: 'absolute', left: '-4px', top: '50%', width: '58px', height: '1px',
+                            background: '#ccc', transform: 'rotate(-24deg)',
+                          }} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {product.sizes?.map(size => (
-                  <button key={size} onClick={() => { setSelectedSize(size); setSizeError(false); }}
-                    style={{ ...btnStyle(selectedSize === size, sizeError && !selectedSize), minWidth: '48px' }}>
-                    {size}
-                  </button>
+            )}
+
+            {/* Quantity */}
+            <div style={{ marginBottom: '22px' }}>
+              <p style={{ fontSize: '0.8rem', color: '#000', marginBottom: '10px' }}>Quantity</p>
+              <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #e5e5e5' }}>
+                <button onClick={() => setQuantity(q => Math.max(1, q - 1))}
+                  style={{ width: '38px', height: '38px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>−</button>
+                <span style={{ width: '36px', textAlign: 'center', fontSize: '0.9rem', color: '#000' }}>{quantity}</span>
+                <button onClick={() => setQuantity(q => q + 1)}
+                  style={{ width: '38px', height: '38px', border: 'none', background: 'none', cursor: 'pointer', fontSize: '1rem', color: '#000' }}>+</button>
+              </div>
+            </div>
+
+            {/* Add to cart */}
+            <button onClick={handleAddToCart} disabled={!product.inStock}
+              style={{
+                width: '100%', background: '#000', color: '#fff', border: 'none', padding: '15px',
+                fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase',
+                cursor: product.inStock ? 'pointer' : 'not-allowed', opacity: product.inStock ? 1 : 0.4,
+                marginBottom: '10px', transition: 'opacity 0.2s',
+              }}
+              onMouseEnter={e => { if (product.inStock) e.target.style.opacity = '0.85'; }}
+              onMouseLeave={e => { if (product.inStock) e.target.style.opacity = '1'; }}>
+              {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+            </button>
+            <button onClick={() => navigate('/cart')}
+              style={{ width: '100%', padding: '13px', border: '1px solid #e5e5e5', background: '#fff', color: '#555', cursor: 'pointer', fontSize: '0.78rem', fontWeight: 600, marginBottom: '28px' }}
+              onMouseEnter={e => e.target.style.borderColor = '#000'}
+              onMouseLeave={e => e.target.style.borderColor = '#e5e5e5'}>
+              View Cart
+            </button>
+
+            {/* Description — bullet lines */}
+            {descLines.length > 0 && (
+              <div style={{ borderTop: '1px solid #eee', paddingTop: '18px' }}>
+                {descLines.map((line, i) => (
+                  <p key={i} style={{ fontSize: '0.82rem', color: '#555', lineHeight: 1.9 }}>
+                    {line.startsWith('*') ? line : `*${line}`}
+                  </p>
                 ))}
               </div>
-            </div>
-
-            {/* Actions */}
-            <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
-              <button onClick={handleAddToCart} disabled={!product.inStock}
-                style={{ flex: 1, background: '#000', color: '#fff', border: 'none', padding: '14px', fontSize: '0.82rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', cursor: product.inStock ? 'pointer' : 'not-allowed', borderRadius: '2px', opacity: product.inStock ? 1 : 0.4, transition: 'opacity 0.2s' }}
-                onMouseEnter={e => { if (product.inStock) e.target.style.opacity = '0.85'; }}
-                onMouseLeave={e => { if (product.inStock) e.target.style.opacity = '1'; }}>
-                {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-              </button>
-              <button onClick={() => setCartOpen(true)}
-                style={{ padding: '14px 20px', border: '1px solid #e5e5e5', background: '#fff', color: '#555', cursor: 'pointer', borderRadius: '2px', fontSize: '0.82rem', fontWeight: 600, transition: 'border-color 0.2s' }}
-                onMouseEnter={e => e.target.style.borderColor = '#000'}
-                onMouseLeave={e => e.target.style.borderColor = '#e5e5e5'}>
-                View Cart
-              </button>
-            </div>
-
-            {/* Description */}
-            <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '20px' }}>
-              <h3 style={{ fontSize: '0.78rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '10px' }}>Details</h3>
-              <p style={{ color: '#666', fontSize: '0.85rem', lineHeight: 1.7 }}>{product.description}</p>
-            </div>
+            )}
             {product.tags?.length > 0 && (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '14px' }}>
                 {product.tags.map(tag => (
-                  <span key={tag} style={{ background: '#f5f5f5', color: '#888', fontSize: '10px', padding: '4px 10px', borderRadius: '2px', textTransform: 'capitalize', letterSpacing: '0.06em' }}>{tag}</span>
+                  <span key={tag} style={{ background: '#f5f5f5', color: '#888', fontSize: '10px', padding: '4px 10px', textTransform: 'capitalize', letterSpacing: '0.06em' }}>{tag}</span>
                 ))}
               </div>
             )}
@@ -205,7 +246,7 @@ export default function ProductDetail() {
 
         {/* Related */}
         {related.length > 0 && (
-          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '3rem' }}>
+          <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '3rem', marginTop: '4rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>You May Also Like</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
               {related.map(p => <ProductCard key={p._id} product={p} />)}
@@ -213,9 +254,66 @@ export default function ProductDetail() {
           </div>
         )}
       </div>
+
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
-        @media(max-width: 767px) { .product-grid { grid-template-columns: 1fr !important; gap: 2rem !important; } }
+
+        .pd-grid {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          gap: 4rem;
+          align-items: start;
+        }
+        /* Flex, not grid — a single child (main images) must be free to take the
+           full width when there's no thumbnail rail (single-image products).
+           With a 2-column grid, a lone child gets auto-placed into the first
+           (80px) track and the image effectively disappears. */
+        .pd-gallery {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+        }
+        .pd-thumbs {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          flex: 0 0 80px;
+          position: sticky;
+          top: 84px;
+        }
+        .pd-main-images {
+          flex: 1 1 0%;
+          min-width: 0;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        .pd-info {
+          position: sticky;
+          top: 84px;
+        }
+
+        /* Mobile gallery hidden on desktop by default */
+        .pd-gallery-mobile { display: none; }
+
+        @media (max-width: 900px) {
+          .pd-grid { grid-template-columns: 1fr; gap: 2rem; }
+          .pd-info { position: static; }
+        }
+
+        @media (max-width: 640px) {
+          .pd-gallery-desktop { display: none; }
+          .pd-gallery-mobile { display: block; }
+          .pd-thumbs-mobile {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 2px;
+          }
+          .pd-thumbs-mobile::-webkit-scrollbar { display: none; }
+        }
       `}</style>
     </div>
   );

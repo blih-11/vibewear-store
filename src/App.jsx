@@ -5,9 +5,7 @@ import { CurrencyProvider } from './context/CurrencyContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
-import CartDrawer from './components/CartDrawer';
 import SearchModal from './components/SearchModal';
-import ConfirmModal from './components/ConfirmModal';
 import PageLoader from './components/PageLoader';
 
 import AuthGate from './pages/AuthGate';
@@ -81,9 +79,7 @@ function AppContent() {
         </Routes>
       </main>
       <Footer />
-      <CartDrawer />
       <SearchModal />
-      <ConfirmModal />
     </div>
   );
 }

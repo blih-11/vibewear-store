@@ -1,14 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
-import HeroSlider from '../components/HeroSlider';
-import ProductCard from '../components/ProductCard';
+import HeroBanners from '../components/HeroBanners';
+import NewArrivalsShowcase from '../components/NewArrivalsShowcase';
 import InstagramEmbed from '../components/InstagramEmbed';
 import StoreShowcase from '../components/StoreShowcase';
 import CategoryShowcase from '../components/CategoryShowcase';
 import FeaturedEditorial from '../components/FeaturedEditorial';
-import { heroSlides, igSliderImages } from '../data/products';
+import { igSliderImages } from '../data/products';
 import { fetchProducts, fetchInstagramPosts } from '../lib/api';
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -26,7 +26,7 @@ const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
 // (must exist in /public/images/, e.g. '/images/editorial/1.jpg').
 // Leave an entry as null to keep using that product's real image.
 // ═══════════════════════════════════════════════════════════════════════════
-const FEATURED_EDITORIAL_IMAGES = ["/images/jacket.png", "/images/jean.png", "/images/boot.png", "/images/chain.png"];
+const FEATURED_EDITORIAL_IMAGES = [null, null, null, null];
 
 // Manual (no autoplay) paged slider — drag/swipe or click the dots to move between pages.
 // Used for the Instagram section on both mobile (1 item/page) and desktop (3 items/page).
@@ -165,18 +165,21 @@ export default function Home() {
   }, []);
 
   const newArrivals = products.filter(p => p.isNew);
+  const fitsRaw = products.filter(p => p.category?.includes('fullfit'));
+  // TEMP: nothing's tagged "fullfit" yet in the admin panel, so fall back to a random
+  // sample of products just so the section has content to preview. Remove this fallback
+  // once real products are tagged "fullfit" — fitsRaw will populate naturally.
+  const fits = useMemo(() => {
+    if (fitsRaw.length > 0) return fitsRaw;
+    return [...products].sort(() => Math.random() - 0.5).slice(0, 5);
+  }, [products, fitsRaw.length]);
   const latestProducts = [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-
-  const padToFive = (arr) => {
-    const rem = arr.length % 4;
-    return rem === 0 ? arr : [...arr, ...Array(4 - rem).fill(null)];
-  };
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
 
       {/* Hero */}
-      <HeroSlider slides={heroSlides} />
+      <HeroBanners />
 
       {!serverLoaded && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', padding: '8px', background: '#f8f8f8', borderBottom: '1px solid #f0f0f0' }}>
@@ -185,34 +188,15 @@ export default function Home() {
         </div>
       )}
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        {/* New Arrivals */}
-        {(!serverLoaded || newArrivals.length > 0) && (
-          <div style={{ marginBottom: '3.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>New Arrivals</h2>
-              <button onClick={() => navigate('/products?filter=new-arrivals')}
-                style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                View All
-              </button>
-            </div>
-            <div className="product-grid-5">
-              {!serverLoaded
-                ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={`na-sk-${i}`}>
-                    <div className="home-skeleton-img" />
-                    <div className="home-skeleton-line" style={{ width: '80%' }} />
-                    <div className="home-skeleton-line" style={{ width: '40%' }} />
-                  </div>
-                ))
-                : padToFive(newArrivals.slice(0, 8)).map((p, i) => p
-                  ? <ProductCard key={p._id} product={p} />
-                  : <div key={`ph-${i}`} className="ghost-card" />
-                )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* New Arrivals — light gray showcase strip, matches the reference design */}
+      {(!serverLoaded || newArrivals.length > 0) && (
+        <NewArrivalsShowcase products={newArrivals} loading={!serverLoaded} />
+      )}
+
+      {/* Fits — full-fit / complete-outfit products */}
+      {(!serverLoaded || fits.length > 0) && (
+        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Fits" viewAllLink="/products?filter=fullfit" />
+      )}
 
       {/* ── Store showcase #1 — between New Arrivals and Latest. Edit image/text/link via props. ── */}
       <StoreShowcase
@@ -221,78 +205,30 @@ export default function Home() {
         image={SHOWCASE_1_IMAGE}
         title="VISIT US IN PERSON"
         lines={[
-           'In-person shopping experience: ', ' Third gate traffic light, Ashale Botwe. Accra,Ghana.',
-          'Monday – Saturday  11:00 AM – 8:00 PM',
+          'In-person shopping experience — add your store address here.',
+          'Add your opening hours here.',
         ]}
         buttonLabel="INSTAGRAM"
         buttonHref="https://instagram.com/vibewear_"
       />
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        {/* Latest — most recently added products (regardless of the "New Arrival" flag), so this section always has content */}
-        {(!serverLoaded || latestProducts.length > 0) && (
-          <div style={{ marginBottom: '3.5rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-              <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>Latest</h2>
-              <button onClick={() => navigate('/products')}
-                style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-                View All
-              </button>
-            </div>
-            <div className="product-grid-5">
-              {!serverLoaded
-                ? Array.from({ length: 4 }).map((_, i) => (
-                  <div key={`lt-sk-${i}`}>
-                    <div className="home-skeleton-img" />
-                    <div className="home-skeleton-line" style={{ width: '80%' }} />
-                    <div className="home-skeleton-line" style={{ width: '40%' }} />
-                  </div>
-                ))
-                : padToFive(latestProducts.slice(0, 8)).map((p, i) => p
-                  ? <ProductCard key={p._id} product={p} />
-                  : <div key={`ph-${i}`} className="ghost-card" />
-                )}
-            </div>
-          </div>
-        )}
-      </div>
+      {/* Latest — most recently added products (regardless of the "New Arrival" flag), so this section always has content */}
+      {(!serverLoaded || latestProducts.length > 0) && (
+        <NewArrivalsShowcase products={latestProducts} loading={!serverLoaded} title="Latest" viewAllLink="/products" />
+      )}
 
       {/* ── Featured editorial — 4 products + autoplay video banner (same slot/size as before). Set bannerVideo below once you have the file. ── */}
       <FeaturedEditorial
         products={products.slice(0, 4).map((p, i) => FEATURED_EDITORIAL_IMAGES[i] ? { ...p, image: FEATURED_EDITORIAL_IMAGES[i] } : p)}
-        bannerVideo={"vibe.mp4"}
+        bannerVideo={'vibe.mp4'}
         loading={!serverLoaded}
       />
 
       {/* ── Category showcase — between the video banner and All Products. Edit categories/text via props. ── */}
       <CategoryShowcase dark />
 
-      <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2.5rem 1.5rem 0' }}>
-        {/* All Products */}
-        <div style={{ marginBottom: '3.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '1.25rem' }}>
-            <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: '#000' }}>All Products</h2>
-            <button onClick={() => navigate('/products')}
-              style={{ fontSize: '0.72rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', letterSpacing: '0.08em', textTransform: 'uppercase', textDecoration: 'underline' }}>
-              Shop All
-            </button>
-          </div>
-          <div className="product-grid-5">
-            {!serverLoaded
-              ? Array.from({ length: 8 }).map((_, i) => (
-                <div key={`sk-${i}`}>
-                  <div className="home-skeleton-img" />
-                  <div className="home-skeleton-line" style={{ width: '80%' }} />
-                  <div className="home-skeleton-line" style={{ width: '40%' }} />
-                </div>
-              ))
-              : padToFive(products.slice(0, 8)).map((p, i) => p
-                ? <ProductCard key={p._id} product={p} />
-                : <div key={`ph-${i}`} className="ghost-card" />
-              )}
-          </div>
-        </div>
-      </div>
+      {/* All Products */}
+      <NewArrivalsShowcase products={products} loading={!serverLoaded} title="All Products" viewAllLink="/products" />
 
       {/* ── Follow Us on Instagram ── */}
       <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0' }}>
@@ -361,33 +297,6 @@ export default function Home() {
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Hide scrollbar for category slider */
-
-        /* 4-col on desktop, 2-col on mobile */
-        .product-grid-5 {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-          margin-bottom: 4rem;
-        }
-        .ghost-card {
-          visibility: hidden;
-        }
-        .home-skeleton-img {
-          aspect-ratio: 3/4;
-          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
-          background-size: 400% 100%;
-          animation: home-shimmer 1.4s ease infinite;
-          margin-bottom: 10px;
-        }
-        .home-skeleton-line {
-          height: 10px;
-          border-radius: 2px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #f7f7f7 37%, #f0f0f0 63%);
-          background-size: 400% 100%;
-          animation: home-shimmer 1.4s ease infinite;
-          margin-bottom: 6px;
-        }
         @keyframes home-shimmer {
           0% { background-position: 100% 50%; }
           100% { background-position: 0 50%; }
@@ -406,17 +315,7 @@ export default function Home() {
           animation: home-shimmer 1.4s ease infinite;
         }
 
-        @media (max-width: 1024px) {
-          .product-grid-5 {
-            grid-template-columns: repeat(3, 1fr);
-          }
-        }
-
         @media (max-width: 767px) {
-          .product-grid-5 {
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-          }
           .ig-desktop-grid { display: none; }
           .ig-mobile-slider { display: block; }
           .ig-skeleton-grid.ig-desktop-grid { display: none; }

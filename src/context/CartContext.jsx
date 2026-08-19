@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { getSavedCart, saveCart, clearSavedCart } from '../lib/api';
 
@@ -6,11 +7,10 @@ const CartContext = createContext(null);
 
 export function CartProvider({ children }) {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [cartItems, setCartItems]   = useState([]);
-  const [cartOpen, setCartOpen]     = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [confirmItem, setConfirmItem] = useState(null);
   const saveTimer = useRef(null);
   const prevUid   = useRef(null);
 
@@ -85,28 +85,19 @@ export function CartProvider({ children }) {
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
   const cartTotal = cartItems.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
-  const requestAddToCart = useCallback((product, size, color) => {
-    setConfirmItem({ product, size, color });
-  }, []);
-
-  const confirmAdd = useCallback(() => {
-    if (confirmItem) {
-      addToCart(confirmItem.product, confirmItem.size, confirmItem.color);
-      setConfirmItem(null);
-      setCartOpen(true);
-    }
-  }, [confirmItem, addToCart]);
-
-  const cancelAdd = useCallback(() => setConfirmItem(null), []);
+  // Adds straight to cart and takes the user to the cart page — no preview drawer, no popup.
+  const requestAddToCart = useCallback((product, size, color, quantity = 1) => {
+    addToCart(product, size, color, quantity);
+    navigate('/cart');
+  }, [addToCart, navigate]);
 
   return (
     <CartContext.Provider value={{
       cartItems, cartCount, cartTotal,
-      cartOpen, setCartOpen,
       searchOpen, setSearchOpen,
       searchQuery, setSearchQuery,
       addToCart, removeFromCart, updateQuantity, clearCart,
-      confirmItem, requestAddToCart, confirmAdd, cancelAdd,
+      requestAddToCart,
     }}>
       {children}
     </CartContext.Provider>
