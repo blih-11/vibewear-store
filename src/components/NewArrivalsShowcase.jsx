@@ -17,7 +17,7 @@ export default function NewArrivalsShowcase({
 
       <div className="na-showcase__row">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => (
+          ? Array.from({ length: 8 }).map((_, i) => (
             <div key={`na-sk-${i}`} className="na-showcase__card">
               <div className="na-showcase__img na-showcase__skeleton" />
               <div className="na-showcase__skeleton-line" style={{ width: '55%' }} />
@@ -25,7 +25,7 @@ export default function NewArrivalsShowcase({
               <div className="na-showcase__skeleton-line" style={{ width: '35%' }} />
             </div>
           ))
-          : products.slice(0, 5).map(p => (
+          : products.slice(0, 10).map(p => (
             <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
               <div className="na-showcase__img">
                 <img src={p.image} alt={p.name} loading="lazy" />

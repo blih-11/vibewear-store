@@ -10,8 +10,8 @@ export default function StoreShowcase({
     'STORE LOCATION: Third gate traffic light, Ashale Botwe. Accra,Ghana.',
     'OPENING HOURS: 9:00 AM - 6:00 PM, Mon - Sat',
   ],
-  buttonLabel = 'INSTAGRAM',
-  buttonHref = 'https://instagram.com/vibewear_',
+  buttonLabel = 'Shop Now',
+  buttonHref = '/products',
   imageSide = 'left', // 'left' | 'right'
   imageWidth = 60,    // % of the section width the image takes — text gets the rest
 }) {
@@ -76,7 +76,7 @@ export default function StoreShowcase({
 
           <div style={{ marginBottom: '2.25rem' }}>
             {lines.map((line, i) => (
-              <p key={i} style={{ fontSize: '0.91rem', color: '#333', lineHeight: 1.8 }}>{line}</p>
+              <p key={i} style={{ fontWeight: 600, fontSize: '.81rem', color: '#333', lineHeight: 1.8 }}>{line}</p>
             ))}
           </div>
 

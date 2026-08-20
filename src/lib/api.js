@@ -65,6 +65,13 @@ export async function deleteProduct(id) {
   return res.json();
 }
 
+// ── Categories & Sections ─────────────────────────────────────────────────────
+export async function fetchCategories(params = {}) {
+  const qs = new URLSearchParams(params).toString();
+  const res = await fetch(`${BASE}/categories${qs ? '?' + qs : ''}`);
+  return res.json();
+}
+
 // ── Analytics ─────────────────────────────────────────────────────────────────
 export async function fetchAnalytics() {
   const res = await fetch(`${BASE}/analytics/summary`, {

@@ -3,7 +3,8 @@ import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useCurrency, CURRENCIES } from '../context/CurrencyContext';
-import { shopCategories, allProductsEntry } from '../data/categories';
+import { allProductsEntry } from '../data/categories';
+import { useShopCategories } from '../hooks/useShopCategories';
 
 // Emoji flags don't render reliably on every OS (notably Windows), so we use small
 // flag images from a CDN instead — falls back to the emoji glyph if no country code is set.
@@ -28,6 +29,7 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
   const [mobileShopOpen, setMobileShopOpen] = useState(false); // mobile accordion
   const [photoError, setPhotoError] = useState(false); // fall back to the default icon if the Google photo URL fails to load
   const { cartCount, setSearchOpen } = useCart();
+  const shopCategories = useShopCategories();
   const { user, logout } = useAuth();
   const { currency, setCurrency, currentCurrency } = useCurrency();
   const location = useLocation();

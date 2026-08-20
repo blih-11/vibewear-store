@@ -2,9 +2,8 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../lib/api';
-import { shopCategories, allProductsEntry } from '../data/categories';
-
-const allCategories = [allProductsEntry, ...shopCategories];
+import { allProductsEntry } from '../data/categories';
+import { useShopCategories } from '../hooks/useShopCategories';
 
 const sortOptions = [
   { id: 'default',    label: 'Featured' },
@@ -17,6 +16,8 @@ const sortOptions = [
 
 export default function Products() {
   const [searchParams] = useSearchParams();
+  const shopCategories = useShopCategories();
+  const allCategories = useMemo(() => [allProductsEntry, ...shopCategories], [shopCategories]);
   const [activeFilter, setActiveFilter] = useState(searchParams.get('filter') || 'all');
   const [sort, setSort] = useState('default');
   const [sortOpen, setSortOpen] = useState(false);

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useEffect, useState, useRef, useMemo } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import HeroBanners from '../components/HeroBanners';
@@ -164,16 +164,32 @@ export default function Home() {
       .finally(() => setIgLoaded(true));
   }, []);
 
-  const newArrivals = products.filter(p => p.isNew);
-  const fitsRaw = products.filter(p => p.category?.includes('fullfit'));
-  // TEMP: nothing's tagged "fullfit" yet in the admin panel, so fall back to a random
-  // sample of products just so the section has content to preview. Remove this fallback
-  // once real products are tagged "fullfit" — fitsRaw will populate naturally.
-  const fits = useMemo(() => {
-    if (fitsRaw.length > 0) return fitsRaw;
-    return [...products].sort(() => Math.random() - 0.5).slice(0, 5);
-  }, [products, fitsRaw.length]);
-  const latestProducts = [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  // New Arrivals — admin-curated via the "New Arrivals" section tag. Falls back to
+  // the isNew flag (existing behavior) until something's tagged.
+  const newArrivalsRaw = products.filter(p => p.category?.includes('new-arrivals'));
+  const newArrivals = newArrivalsRaw.length > 0 ? newArrivalsRaw : products.filter(p => p.isNew);
+
+  // Fits — admin-curated via the "Full Fits" category tag in the admin panel.
+  // No random fallback: if nothing's tagged yet, the section simply doesn't render
+  // (see the conditional render below) rather than showing an arbitrary sample.
+  const fits = products.filter(p => p.category?.includes('fullfit'));
+
+  // Latest — admin-curated via the "Latest" section tag. Falls back to the most
+  // recently added products (previous behavior) until something's tagged.
+  const latestRaw = products.filter(p => p.category?.includes('latest'));
+  const latestProducts = latestRaw.length > 0
+    ? latestRaw
+    : [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  // Top Products (formerly "All Products") — admin-curated via the "Top Products"
+  // section tag. Falls back to every product until something's tagged.
+  const topProductsRaw = products.filter(p => p.category?.includes('top-products'));
+  const topProducts = topProductsRaw.length > 0 ? topProductsRaw : products;
+
+  // Featured editorial — admin-curated via the "Featured Editorial" section tag in the
+  // admin panel. Falls back to the 4 most recent products until something's tagged.
+  const featuredRaw = products.filter(p => p.category?.includes('featured-editorial'));
+  const featured = featuredRaw.length > 0 ? featuredRaw.slice(0, 4) : products.slice(0, 4);
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
@@ -199,27 +215,27 @@ export default function Home() {
       )}
 
       {/* ── Store showcase #1 — between New Arrivals and Latest. Edit image/text/link via props. ── */}
-      <StoreShowcase
+       <StoreShowcase
         imageSide="left"
         imageWidth={60}
         image={SHOWCASE_1_IMAGE}
         title="VISIT US IN PERSON"
         lines={[
-          'In-person shopping experience — add your store address here.',
-          'Add your opening hours here.',
+           'In-person shopping experience at: ', ' Third gate traffic light, Ashale Botwe. Accra,Ghana  .',
+          'Monday – Saturday  11:00 AM – 8:00 PM',
         ]}
-        buttonLabel="INSTAGRAM"
-        buttonHref="https://instagram.com/vibewear_"
+        buttonLabel="SHOP NOW"
+        buttonHref="/products"
       />
 
       {/* Latest — most recently added products (regardless of the "New Arrival" flag), so this section always has content */}
       {(!serverLoaded || latestProducts.length > 0) && (
-        <NewArrivalsShowcase products={latestProducts} loading={!serverLoaded} title="Latest" viewAllLink="/products" />
+        <NewArrivalsShowcase products={latestProducts} loading={!serverLoaded} title="Latest" viewAllLink="/products?filter=latest" />
       )}
 
-      {/* ── Featured editorial — 4 products + autoplay video banner (same slot/size as before). Set bannerVideo below once you have the file. ── */}
+      {/* ── Featured editorial — 4 admin-curated products + autoplay video banner (same slot/size as before). Set bannerVideo below once you have the file. ── */}
       <FeaturedEditorial
-        products={products.slice(0, 4).map((p, i) => FEATURED_EDITORIAL_IMAGES[i] ? { ...p, image: FEATURED_EDITORIAL_IMAGES[i] } : p)}
+        products={featured.map((p, i) => FEATURED_EDITORIAL_IMAGES[i] ? { ...p, image: FEATURED_EDITORIAL_IMAGES[i] } : p)}
         bannerVideo={'vibe.mp4'}
         loading={!serverLoaded}
       />
@@ -227,8 +243,8 @@ export default function Home() {
       {/* ── Category showcase — between the video banner and All Products. Edit categories/text via props. ── */}
       <CategoryShowcase dark />
 
-      {/* All Products */}
-      <NewArrivalsShowcase products={products} loading={!serverLoaded} title="All Products" viewAllLink="/products" />
+      {/* Top Products — admin-curated highlight row (formerly "All Products") */}
+      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" />
 
       {/* ── Follow Us on Instagram ── */}
       <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0' }}>
