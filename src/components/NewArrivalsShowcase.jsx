@@ -7,9 +7,12 @@ export default function NewArrivalsShowcase({
   title = 'New Arrivals',
   viewAllLink = '/products?filter=new-arrivals',
   brandLabel = 'Vibe Wear', // shown as the small line above each product name — currently unused, see below
+  limit = 10, // pass `null` to show every product with no cap (used by "All Products")
+  showOriginalPrice = false, // pass true (used by "Sales") to show the struck-through original price alongside the current one
 }) {
   const navigate = useNavigate();
   const { formatPrice } = useCurrency();
+  const shown = limit ? products.slice(0, limit) : products;
 
   return (
     <section className="na-showcase">
@@ -25,14 +28,21 @@ export default function NewArrivalsShowcase({
               <div className="na-showcase__skeleton-line" style={{ width: '35%' }} />
             </div>
           ))
-          : products.slice(0, 10).map(p => (
+          : shown.map(p => (
             <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
               <div className="na-showcase__img">
                 <img src={p.image} alt={p.name} loading="lazy" />
               </div>
               {/* <p className="na-showcase__brand">{brandLabel}</p> */}
               <p className="na-showcase__name">{p.name}</p>
-              <p className="na-showcase__price">{formatPrice(p.price)}</p>
+              {showOriginalPrice && p.originalPrice > p.price ? (
+                <p className="na-showcase__price">
+                  {formatPrice(p.price)}
+                  <span className="na-showcase__price--was">{formatPrice(p.originalPrice)}</span>
+                </p>
+              ) : (
+                <p className="na-showcase__price">{formatPrice(p.price)}</p>
+              )}
               {/* {p.colors?.length > 0 && (
                 <div className="na-showcase__swatches">
                   {p.colors.slice(0, 4).map((c, i) => (
@@ -122,6 +132,15 @@ export default function NewArrivalsShowcase({
           font-size: 0.8rem;
           color: #666;
           margin: 0 0 8px;
+          display: flex;
+          justify-content: center;
+          align-items: baseline;
+          gap: 8px;
+        }
+        .na-showcase__price--was {
+          text-decoration: line-through;
+          color: #aaa;
+          font-size: 0.74rem;
         }
         .na-showcase__swatches {
           display: flex;

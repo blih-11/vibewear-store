@@ -64,7 +64,7 @@ export default function HeroBanners() {
 
         .hero-dual__content {
           position: absolute;
-          top: 50%;
+          top: 54%;
           left: 0;
           right: 0;
           transform: translateY(-50%);
@@ -124,8 +124,8 @@ export default function HeroBanners() {
           color: #000;
         }
 
-        /* Small screens — CTA pinned to a fixed spot over the image */
-        @media (max-width: 899px) {
+        /* Small screens only — CTA pinned to a fixed spot over the image, per your own tuning */
+        @media (max-width: 640px) {
           .hero-dual__cta {
             font-size: 1.0rem;
             margin-left: 120px;
@@ -133,15 +133,17 @@ export default function HeroBanners() {
           }
         }
 
-        /* Desktop: shorter, capped height instead of full 100vh */
-        @media (min-width: 900px) {
+        /* Tablet + desktop: shorter, capped height instead of full 100vh, CTA centered
+           at the bottom of the panel. Starts right after the small-screen breakpoint
+           above so tablets get the same centered treatment as desktop, not the
+           phone-tuned fixed offsets. */
+        @media (min-width: 641px) {
           .hero-dual__panel {
             height: 100vh;
             min-height: unset;
             max-height: 760px;
           }
 
-          /* CTA centered at the bottom of the panel */
           .hero-dual__content {
             justify-content: center;
           }

@@ -7,7 +7,6 @@ import NewArrivalsShowcase from '../components/NewArrivalsShowcase';
 import InstagramEmbed from '../components/InstagramEmbed';
 import StoreShowcase from '../components/StoreShowcase';
 import CategoryShowcase from '../components/CategoryShowcase';
-import FeaturedEditorial from '../components/FeaturedEditorial';
 import { igSliderImages } from '../data/products';
 import { fetchProducts, fetchInstagramPosts } from '../lib/api';
 
@@ -18,15 +17,6 @@ import { fetchProducts, fetchInstagramPosts } from '../lib/api';
 const SHOWCASE_1_IMAGE = '/images/store.jpg';
 
 const IG_GRID_DESKTOP = igSliderImages.slice(0, 12);
-
-// ═══════════════════════════════════════════════════════════════════════════
-// FEATURED EDITORIAL IMAGES — the 4 products beside the video banner normally
-// use each product's real image. To swap in a different photo for any of the
-// 4 slots WITHOUT touching that product in the admin panel, set a path here
-// (must exist in /public/images/, e.g. '/images/editorial/1.jpg').
-// Leave an entry as null to keep using that product's real image.
-// ═══════════════════════════════════════════════════════════════════════════
-const FEATURED_EDITORIAL_IMAGES = [null, null, null, null];
 
 // Manual (no autoplay) paged slider — drag/swipe or click the dots to move between pages.
 // Used for the Instagram section on both mobile (1 item/page) and desktop (3 items/page).
@@ -172,24 +162,20 @@ export default function Home() {
   // Fits — admin-curated via the "Full Fits" category tag in the admin panel.
   // No random fallback: if nothing's tagged yet, the section simply doesn't render
   // (see the conditional render below) rather than showing an arbitrary sample.
+  // Displayed on the homepage as "Curated For You" — the underlying tag/filter
+  // (fullfit) is unchanged, this is just the storefront-facing section title.
   const fits = products.filter(p => p.category?.includes('fullfit'));
 
-  // Latest — admin-curated via the "Latest" section tag. Falls back to the most
-  // recently added products (previous behavior) until something's tagged.
-  const latestRaw = products.filter(p => p.category?.includes('latest'));
-  const latestProducts = latestRaw.length > 0
-    ? latestRaw
-    : [...products].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  // Sales — admin-curated via the "Sales" section tag. Falls back to products
+  // marked isSale until something's explicitly tagged.
+  const salesRaw = products.filter(p => p.category?.includes('sales'));
+  const salesProducts = salesRaw.length > 0 ? salesRaw : products.filter(p => p.isSale);
 
   // Top Products (formerly "All Products") — admin-curated via the "Top Products"
-  // section tag. Falls back to every product until something's tagged.
+  // section tag. Falls back to every product until something's tagged. No cap —
+  // this section shows every matching product, not just the first 10.
   const topProductsRaw = products.filter(p => p.category?.includes('top-products'));
   const topProducts = topProductsRaw.length > 0 ? topProductsRaw : products;
-
-  // Featured editorial — admin-curated via the "Featured Editorial" section tag in the
-  // admin panel. Falls back to the 4 most recent products until something's tagged.
-  const featuredRaw = products.filter(p => p.category?.includes('featured-editorial'));
-  const featured = featuredRaw.length > 0 ? featuredRaw.slice(0, 4) : products.slice(0, 4);
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
@@ -209,12 +195,12 @@ export default function Home() {
         <NewArrivalsShowcase products={newArrivals} loading={!serverLoaded} />
       )}
 
-      {/* Fits — full-fit / complete-outfit products */}
+      {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as before) */}
       {(!serverLoaded || fits.length > 0) && (
-        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Fits" viewAllLink="/products?filter=fullfit" />
+        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
       )}
 
-      {/* ── Store showcase #1 — between New Arrivals and Latest. Edit image/text/link via props. ── */}
+      {/* ── Store showcase #1 — between New Arrivals and Sales. Edit image/text/link via props. ── */}
        <StoreShowcase
         imageSide="left"
         imageWidth={60}
@@ -228,23 +214,16 @@ export default function Home() {
         buttonHref="/products"
       />
 
-      {/* Latest — most recently added products (regardless of the "New Arrival" flag), so this section always has content */}
-      {(!serverLoaded || latestProducts.length > 0) && (
-        <NewArrivalsShowcase products={latestProducts} loading={!serverLoaded} title="Latest" viewAllLink="/products?filter=latest" />
+      {/* Sales — admin-curated via the "Sales" section tag, falls back to products marked isSale */}
+      {(!serverLoaded || salesProducts.length > 0) && (
+        <NewArrivalsShowcase products={salesProducts} loading={!serverLoaded} title="Sales" viewAllLink="/products?filter=sales" showOriginalPrice />
       )}
 
-      {/* ── Featured editorial — 4 admin-curated products + autoplay video banner (same slot/size as before). Set bannerVideo below once you have the file. ── */}
-      <FeaturedEditorial
-        products={featured.map((p, i) => FEATURED_EDITORIAL_IMAGES[i] ? { ...p, image: FEATURED_EDITORIAL_IMAGES[i] } : p)}
-        bannerVideo={'vibe.mp4'}
-        loading={!serverLoaded}
-      />
-
-      {/* ── Category showcase — between the video banner and All Products. Edit categories/text via props. ── */}
+      {/* ── Category showcase ── */}
       <CategoryShowcase dark />
 
-      {/* Top Products — admin-curated highlight row (formerly "All Products") */}
-      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" />
+      {/* Top Products (All Products) — admin-curated highlight row, no cap: shows every matching product */}
+      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" limit={null} />
 
       {/* ── Follow Us on Instagram ── */}
       <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0' }}>
