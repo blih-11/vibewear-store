@@ -4,6 +4,10 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import ProductCard from '../components/ProductCard';
 import PageLoader from '../components/PageLoader';
+import Seo from '../components/Seo';
+import { optimizeImage } from '../lib/optimizeImage';
+
+const SITE_URL = 'https://vibewear.online';
 
 const BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000/api';
 const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
@@ -58,6 +62,7 @@ export default function ProductDetail() {
 
   if (!product) return (
     <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+      <Seo title="Product Not Found" path={`/products/${id}`} noindex />
       <h2 style={{ fontWeight: 800, fontSize: '1.5rem' }}>Product not found</h2>
       <button onClick={() => navigate('/products')} style={{ color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}>Browse Products</button>
     </div>
@@ -82,8 +87,18 @@ export default function ProductDetail() {
     .map(l => l.trim())
     .filter(Boolean);
 
+  const productId = product._id || product.id;
+  const productImage = images[0]?.startsWith('http') ? images[0] : `${SITE_URL}${images[0]}`;
+  const plainDescription = (product.description || `${product.name} — available now at Vibewear.`).slice(0, 160);
+
   return (
     <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
+      <Seo
+        title={product.name}
+        description={plainDescription}
+        path={`/products/${productId}`}
+        image={productImage}
+      />
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem 0' }}>
         {/* Breadcrumb */}
         <nav style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '1.5rem', fontSize: '0.75rem', color: '#aaa' }}>
@@ -110,7 +125,7 @@ export default function ProductDetail() {
                       width: '100%', aspectRatio: '3/4', overflow: 'hidden', padding: 0, cursor: 'pointer',
                       border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
                     }}>
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                    <img src={optimizeImage(img, { width: 300 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
               </div>
@@ -120,7 +135,7 @@ export default function ProductDetail() {
               {images.map((img, i) => (
                 <div key={i} ref={el => imgRefs.current[i] = el}
                   style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
-                  <img src={img} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                  <img src={optimizeImage(img, { width: 1000 })} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                 </div>
               ))}
             </div>
@@ -129,7 +144,7 @@ export default function ProductDetail() {
           {/* ── Mobile gallery: one large main image + horizontal thumbnail strip below ── */}
           <div className="pd-gallery-mobile">
             <div style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
-              <img src={images[selectedImg] || product.image} alt={product.name}
+              <img src={optimizeImage(images[selectedImg] || product.image, { width: 900 })} alt={product.name}
                 style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
             </div>
             {images.length > 1 && (
@@ -140,7 +155,7 @@ export default function ProductDetail() {
                       width: '64px', height: '80px', flexShrink: 0, overflow: 'hidden', padding: 0, cursor: 'pointer',
                       border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
                     }}>
-                    <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                    <img src={optimizeImage(img, { width: 200 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
               </div>

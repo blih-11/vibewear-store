@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Seo from '../components/Seo';
 
 export default function Contact() {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
@@ -35,6 +36,11 @@ export default function Contact() {
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
+      <Seo
+        title="Contact Us"
+        description="Get in touch with Vibewear — questions about orders, sizing, or our Lagos store."
+        path="/contact"
+      />
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '3rem 1.5rem' }}>
 
         <div style={{ marginBottom: '2.5rem' }}>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import { useNavigate } from 'react-router-dom';
+import { optimizeImage } from '../lib/optimizeImage';
 
 export default function CartDrawer() {
   const { cartOpen, setCartOpen, cartItems, cartTotal, removeFromCart, updateQuantity } = useCart();
@@ -45,7 +46,7 @@ export default function CartDrawer() {
             <div className="divide-y divide-gray-100">
               {cartItems.map(item => (
                 <div key={item.key} className="flex gap-4 py-4 first:pt-0">
-                  <img src={item.image} alt={item.name} className="w-[70px] h-[88px] object-cover flex-shrink-0 bg-gray-50" />
+                  <img src={optimizeImage(item.image, { width: 150 })} alt={item.name} className="w-[70px] h-[88px] object-cover flex-shrink-0 bg-gray-50" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[10px] tracking-[0.1em] uppercase text-gray-400 mb-0.5">Vibe Wear</p>
                     <h4 className="text-black text-sm font-semibold leading-snug truncate">{item.name}</h4>

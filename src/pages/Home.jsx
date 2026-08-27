@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useState, useRef } from 'react';
+import Seo from '../components/Seo';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import HeroBanners from '../components/HeroBanners';
@@ -179,6 +180,11 @@ export default function Home() {
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
+      <Seo
+        title="Vibewear | Streetwear & Fits Online"
+        description="Shop Vibewear for tees, hoodies, shirts, bottoms, and accessories. Streetwear fits shipped from Lagos, Nigeria. New drops weekly."
+        path="/"
+      />
 
       {/* Hero */}
       <HeroBanners />

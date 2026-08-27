@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
+import Seo from '../components/Seo';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Cart() {
   if (cartItems.length === 0) {
     return (
       <div className="bg-white min-h-screen pt-16">
+        <Seo title="Your Cart" path="/cart" noindex />
         <div className="max-w-[1100px] mx-auto px-6 py-20 text-center">
           <div className="w-16 h-16 border border-gray-200 rounded-full flex items-center justify-center mx-auto mb-6">
             <svg width="24" height="24" fill="none" stroke="#ccc" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>
@@ -30,6 +32,7 @@ export default function Cart() {
 
   return (
     <div className="bg-white min-h-screen pt-16">
+      <Seo title="Your Cart" path="/cart" noindex />
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-10">
 
         {/* Header row — spans full width on both breakpoints */}

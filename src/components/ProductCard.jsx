@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
+import { optimizeImage } from '../lib/optimizeImage';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -64,7 +65,7 @@ export default function ProductCard({ product }) {
             transition: 'transform 0.35s cubic-bezier(0.4,0,0.2,1)',
           }}>
             {images.map((src, i) => (
-              <img key={i} src={src} alt={product?.name} draggable={false}
+              <img key={i} src={optimizeImage(src, { width: 600 })} alt={product?.name} draggable={false}
                 style={{ width: '100%', height: '100%', objectFit: 'cover', flexShrink: 0 }}
                 loading="lazy"
               />

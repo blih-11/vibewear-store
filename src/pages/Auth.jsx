@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import Seo from '../components/Seo';
 
 const iStyle = (err) => ({
   width: '100%', border: `1px solid ${err ? '#ef4444' : '#e5e5e5'}`, borderRadius: '2px',
@@ -88,6 +89,7 @@ export default function Auth() {
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '5rem 1.5rem' }}>
+      <Seo title="Sign In" path="/auth" noindex />
       <div style={{ width: '100%', maxWidth: '420px' }}>
 
         {/* Brand */}

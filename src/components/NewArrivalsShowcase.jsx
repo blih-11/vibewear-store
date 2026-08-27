@@ -1,5 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
+import { optimizeImage } from '../lib/optimizeImage';
 
 export default function NewArrivalsShowcase({
   products = [],
@@ -31,7 +32,7 @@ export default function NewArrivalsShowcase({
           : shown.map(p => (
             <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
               <div className="na-showcase__img">
-                <img src={p.image} alt={p.name} loading="lazy" />
+                <img src={optimizeImage(p.image, { width: 600 })} alt={p.name} loading="lazy" />
               </div>
               {/* <p className="na-showcase__brand">{brandLabel}</p> */}
               <p className="na-showcase__name">{p.name}</p>

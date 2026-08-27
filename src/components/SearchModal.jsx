@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchProducts } from '../lib/api';
+import { optimizeImage } from '../lib/optimizeImage';
 
 export default function SearchModal() {
   const { searchOpen, setSearchOpen } = useCart();
@@ -57,7 +58,7 @@ export default function SearchModal() {
                 {results.map(product => (
                   <button key={product._id} onClick={() => handleSelect(product)}
                     className="w-full flex items-center gap-4 px-5 py-3 hover:bg-gray-100 transition-colors text-left">
-                    <img src={product.image} alt={product.name} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />
+                    <img src={optimizeImage(product.image, { width: 100 })} alt={product.name} className="w-12 h-14 object-cover rounded-lg flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-brand-cream text-sm font-medium truncate">{product.name}</p>
                       <p className="text-brand-muted text-xs mt-0.5 capitalize">{product.category?.join(', ')}</p>

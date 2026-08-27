@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import Seo from '../components/Seo';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../lib/api';
 import { allProductsEntry } from '../data/categories';
@@ -76,6 +77,11 @@ export default function Products() {
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px', paddingBottom: '80px' }}>
+      <Seo
+        title="Shop All Products"
+        description="Browse Vibewear's full collection of tees, shirts, hoodies, bottoms, and accessories. New arrivals every week."
+        path="/products"
+      />
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem' }}>
 
         {/* Header */}
