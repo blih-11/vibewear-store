@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../lib/optimizeImage';
+import PagedCarousel from './PagedCarousel';
 
 export default function NewArrivalsShowcase({
   products = [],
@@ -15,44 +16,54 @@ export default function NewArrivalsShowcase({
   const { formatPrice } = useCurrency();
   const shown = limit ? products.slice(0, limit) : products;
 
+  const skeletonCards = Array.from({ length: 8 }).map((_, i) => (
+    <div key={`na-sk-${i}`} className="na-showcase__card">
+      <div className="na-showcase__img na-showcase__skeleton" />
+      <div className="na-showcase__skeleton-line" style={{ width: '55%' }} />
+      <div className="na-showcase__skeleton-line" style={{ width: '75%' }} />
+      <div className="na-showcase__skeleton-line" style={{ width: '35%' }} />
+    </div>
+  ));
+
+  const renderCard = (p) => (
+    <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
+      <div className="na-showcase__img">
+        <img src={optimizeImage(p.image, { width: 600 })} alt={p.name} loading="lazy" />
+      </div>
+      {/* <p className="na-showcase__brand">{brandLabel}</p> */}
+      <p className="na-showcase__name">{p.name}</p>
+      {showOriginalPrice && p.originalPrice > p.price ? (
+        <p className="na-showcase__price">
+          {formatPrice(p.price)}
+          <span className="na-showcase__price--was">{formatPrice(p.originalPrice)}</span>
+        </p>
+      ) : (
+        <p className="na-showcase__price">{formatPrice(p.price)}</p>
+      )}
+      {/* {p.colors?.length > 0 && (
+        <div className="na-showcase__swatches">
+          {p.colors.slice(0, 4).map((c, i) => (
+            <span key={i} className="na-showcase__swatch" style={{ background: c.toLowerCase() }} title={c} />
+          ))}
+        </div>
+      )} */}
+    </div>
+  );
+
   return (
     <section className="na-showcase">
       <h2 className="na-showcase__title">{title}</h2>
 
-      <div className="na-showcase__row">
+      {/* Desktop / tablet: horizontal scroll row (unchanged) */}
+      <div className="na-showcase__row na-showcase__row--desktop">
+        {loading ? skeletonCards : shown.map(renderCard)}
+      </div>
+
+      {/* Mobile: paged carousel, 2 products per page / 2-column, swipe or dots to move */}
+      <div className="na-showcase__carousel-mobile">
         {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-            <div key={`na-sk-${i}`} className="na-showcase__card">
-              <div className="na-showcase__img na-showcase__skeleton" />
-              <div className="na-showcase__skeleton-line" style={{ width: '55%' }} />
-              <div className="na-showcase__skeleton-line" style={{ width: '75%' }} />
-              <div className="na-showcase__skeleton-line" style={{ width: '35%' }} />
-            </div>
-          ))
-          : shown.map(p => (
-            <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
-              <div className="na-showcase__img">
-                <img src={optimizeImage(p.image, { width: 600 })} alt={p.name} loading="lazy" />
-              </div>
-              {/* <p className="na-showcase__brand">{brandLabel}</p> */}
-              <p className="na-showcase__name">{p.name}</p>
-              {showOriginalPrice && p.originalPrice > p.price ? (
-                <p className="na-showcase__price">
-                  {formatPrice(p.price)}
-                  <span className="na-showcase__price--was">{formatPrice(p.originalPrice)}</span>
-                </p>
-              ) : (
-                <p className="na-showcase__price">{formatPrice(p.price)}</p>
-              )}
-              {/* {p.colors?.length > 0 && (
-                <div className="na-showcase__swatches">
-                  {p.colors.slice(0, 4).map((c, i) => (
-                    <span key={i} className="na-showcase__swatch" style={{ background: c.toLowerCase() }} title={c} />
-                  ))}
-                </div>
-              )} */}
-            </div>
-          ))}
+          ? <div className="na-showcase__row">{skeletonCards.slice(0, 2)}</div>
+          : <PagedCarousel items={shown} pageSize={2} columns={2} renderItem={(p) => renderCard(p)} />}
       </div>
 
       <div className="na-showcase__viewall-wrap">
@@ -88,6 +99,10 @@ export default function NewArrivalsShowcase({
           scrollbar-width: none;
         }
         .na-showcase__row::-webkit-scrollbar { display: none; }
+
+        /* Desktop row shown by default, mobile carousel hidden — flipped at the breakpoint below */
+        .na-showcase__row--desktop { display: flex; }
+        .na-showcase__carousel-mobile { display: none; }
 
         .na-showcase__card {
           flex: 0 0 auto;
@@ -194,14 +209,22 @@ export default function NewArrivalsShowcase({
             font-size: 1.1rem;
             margin: 0 0 1.2rem 0.25rem;
           }
-          .na-showcase__row {
-            gap: 14px;
-            scroll-snap-type: x mandatory;
-            -webkit-overflow-scrolling: touch;
-          }
           .na-showcase__card { width: 62vw; }
           .na-showcase__viewall-wrap { margin-top: 1.6rem; }
-          .na-showcase__viewall { width: 62vw; max-width: 320px; }
+          .na-showcase__viewall { width: 100%; max-width: 320px; }
+
+          /* Swap: hide the old horizontal-scroll row, show the 2-per-page carousel */
+          .na-showcase__row--desktop { display: none; }
+          .na-showcase__carousel-mobile { display: block; }
+          .na-showcase__carousel-mobile .na-showcase__card { width: 100%; }
+        }
+
+        /* Small phones specifically — trims the top padding and title spacing a bit
+           more so the first row of the carousel sits fully above the fold, right
+           under the (now shorter) hero. */
+        @media (max-width: 640px) {
+          .na-showcase { padding: 1.4rem 1rem 2.2rem; }
+          .na-showcase__title { margin: 0 0 0.8rem 0.25rem; }
         }
       `}</style>
     </section>

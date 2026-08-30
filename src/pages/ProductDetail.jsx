@@ -4,6 +4,7 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import ProductCard from '../components/ProductCard';
 import PageLoader from '../components/PageLoader';
+import PagedCarousel from '../components/PagedCarousel';
 import Seo from '../components/Seo';
 import { optimizeImage } from '../lib/optimizeImage';
 
@@ -25,11 +26,12 @@ export default function ProductDetail() {
   const [selectedSize, setSelectedSize] = useState(null);
   const [selectedImg, setSelectedImg] = useState(0);
   const [quantity, setQuantity] = useState(1);
+  const [sizeError, setSizeError] = useState(false);
   const imgRefs = useRef([]);
 
   useEffect(() => {
     setLoading(true);
-    setSelectedSize(null); setSelectedImg(0); setQuantity(1);
+    setSelectedSize(null); setSelectedImg(0); setQuantity(1); setSizeError(false);
 
     const applyProduct = (prod, allProds) => {
       setProduct(prod);
@@ -76,6 +78,10 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
+    if (product.sizes?.length > 0 && !selectedSize) {
+      setSizeError(true);
+      return;
+    }
     requestAddToCart(product, selectedSize, null, quantity);
   };
 
@@ -175,8 +181,8 @@ export default function ProductDetail() {
             {/* Size */}
             {product.sizes?.length > 0 && (
               <div style={{ marginBottom: '22px' }}>
-                <p style={{ fontSize: '0.8rem', color: '#000', marginBottom: '10px' }}>
-                  Size{selectedSize ? `: ${selectedSize}` : ''} <span style={{ color: '#aaa' }}>(optional)</span>
+                <p style={{ fontSize: '0.8rem', color: sizeError ? '#e53e3e' : '#000', marginBottom: '10px' }}>
+                  Size{selectedSize ? `: ${selectedSize}` : ''} <span style={{ color: sizeError ? '#e53e3e' : '#aaa' }}>(required)</span>
                 </p>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {ALL_SIZES.map(size => {
@@ -184,10 +190,10 @@ export default function ProductDetail() {
                     const selected = selectedSize === size;
                     return (
                       <button key={size} disabled={!available}
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => { setSelectedSize(size); setSizeError(false); }}
                         style={{
                           position: 'relative', width: '48px', height: '40px',
-                          border: '1px solid', borderColor: selected ? '#000' : '#e5e5e5',
+                          border: '1px solid', borderColor: sizeError && !selected ? '#e53e3e' : (selected ? '#000' : '#e5e5e5'),
                           background: selected ? '#000' : '#fff',
                           color: available ? (selected ? '#fff' : '#000') : '#ccc',
                           fontSize: '0.8rem', fontWeight: 500,
@@ -205,6 +211,9 @@ export default function ProductDetail() {
                     );
                   })}
                 </div>
+                {sizeError && (
+                  <p style={{ fontSize: '0.74rem', color: '#e53e3e', marginTop: '8px' }}>Please select a size</p>
+                )}
               </div>
             )}
 
@@ -263,8 +272,15 @@ export default function ProductDetail() {
         {related.length > 0 && (
           <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '3rem', marginTop: '4rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>You May Also Like</h2>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+
+            {/* Desktop / tablet: regular grid (unchanged) */}
+            <div className="pd-related__grid-desktop" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
               {related.map(p => <ProductCard key={p._id} product={p} />)}
+            </div>
+
+            {/* Mobile: paged carousel, 2 products per page / 2-column, swipe or dots to move */}
+            <div className="pd-related__carousel-mobile">
+              <PagedCarousel items={related} pageSize={2} columns={2} renderItem={(p) => <ProductCard key={p._id} product={p} />} />
             </div>
           </div>
         )}
@@ -311,6 +327,9 @@ export default function ProductDetail() {
         /* Mobile gallery hidden on desktop by default */
         .pd-gallery-mobile { display: none; }
 
+        /* Related ("You May Also Like") — desktop grid shown by default, mobile carousel hidden */
+        .pd-related__carousel-mobile { display: none; }
+
         @media (max-width: 900px) {
           .pd-grid { grid-template-columns: 1fr; gap: 2rem; }
           .pd-info { position: static; }
@@ -328,6 +347,9 @@ export default function ProductDetail() {
             padding-bottom: 2px;
           }
           .pd-thumbs-mobile::-webkit-scrollbar { display: none; }
+
+          .pd-related__grid-desktop { display: none; }
+          .pd-related__carousel-mobile { display: block; }
         }
       `}</style>
     </div>

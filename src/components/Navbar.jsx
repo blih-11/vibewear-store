@@ -163,19 +163,20 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
             </Link>
           </div>
 
-          <button
-            className="zttw-hamburger"
-            onClick={() => setMenuOpen(o => !o)}
-            aria-label="Menu"
-          >
-            <span style={{ background: barColor }} className={`zttw-bar${menuOpen ? ' b1-open' : ''}`} />
-            <span style={{ background: barColor, width: '18px' }} className={`zttw-bar${menuOpen ? ' b2-open' : ''}`} />
-            <span style={{ background: barColor }} className={`zttw-bar${menuOpen ? ' b3-open' : ''}`} />
-          </button>
+          {/* Mobile-only logo — sits at the left edge on mobile, where the hamburger used to be.
+              The desktop logo below (CENTER block) stays centered and is hidden on mobile. */}
+          <Link to="/" className="zttw-nav__logo-mobile-wrap" style={{ textDecoration: 'none', alignItems: 'center' }}>
+            <img
+              style={{ height: '40px' }}
+              src={effectiveScrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
+              alt="Vibe Wear"
+              className="zttw-nav__logo"
+            />
+          </Link>
         </div>
 
-        {/* CENTER: logo — white over the transparent hero, black once scrolled */}
-        <div className="zttw-nav__center">
+        {/* CENTER: logo — white over the transparent hero, black once scrolled. Desktop only. */}
+        <div className="zttw-nav__center zttw-nav__center-desktop">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <img
               style={{height: "50px"}}
@@ -301,6 +302,17 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
               </span>
             )}
           </Link>
+
+          {/* Hamburger — right edge on mobile (desktop keeps it hidden via .zttw-hamburger CSS) */}
+          <button
+            className="zttw-hamburger"
+            onClick={() => setMenuOpen(o => !o)}
+            aria-label="Menu"
+          >
+            <span style={{ background: barColor }} className={`zttw-bar${menuOpen ? ' b1-open' : ''}`} />
+            <span style={{ background: barColor, width: '18px' }} className={`zttw-bar${menuOpen ? ' b2-open' : ''}`} />
+            <span style={{ background: barColor }} className={`zttw-bar${menuOpen ? ' b3-open' : ''}`} />
+          </button>
         </div>
       </nav>
 
@@ -452,6 +464,9 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
 
         .zttw-nav__logo { height: 28px; width: auto; display: block; }
 
+        /* Mobile-only logo (left edge) — hidden on desktop, shown in the mobile media query below */
+        .zttw-nav__logo-mobile-wrap { display: none; }
+
         .zttw-nav__links { display: flex; gap: 2rem; align-items: center; }
         .zttw-nav__link {
           text-decoration: none;
@@ -509,6 +524,10 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
           .desktop-only { display: none !important; }
           .zttw-nav__right { gap: 0.9rem; }
           .zttw-mobile-menu { padding-top: 64px; }
+
+          /* Logo left, hamburger right on mobile */
+          .zttw-nav__logo-mobile-wrap { display: flex; }
+          .zttw-nav__center-desktop { display: none; }
         }
       `}</style>
     </>
