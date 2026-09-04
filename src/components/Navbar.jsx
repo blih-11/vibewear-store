@@ -164,26 +164,48 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
           </div>
 
           {/* Mobile-only logo — sits at the left edge on mobile, where the hamburger used to be.
-              The desktop logo below (CENTER block) stays centered and is hidden on mobile. */}
+              The desktop logo below (CENTER block) stays centered and is hidden on mobile.
+              Both color variants are stacked and crossfaded via opacity (matching the same
+              0.35s ease as the nav's background/border transition below) instead of swapping
+              <img src>, which can't be animated and was popping instantly while everything
+              else around it eased in — that mismatch was the "not smooth" scroll transition. */}
           <Link to="/" className="zttw-nav__logo-mobile-wrap" style={{ textDecoration: 'none', alignItems: 'center' }}>
-            <img
-              style={{ height: '40px' }}
-              src={effectiveScrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
-              alt="Vibe Wear"
-              className="zttw-nav__logo"
-            />
+            <span className="zttw-nav__logo-stack" style={{ height: '40px', width: '87px' }}>
+              <img
+                src="/images/vibewear-logo-white.png"
+                alt="Vibe Wear"
+                className="zttw-nav__logo zttw-nav__logo--layer"
+                style={{ height: '40px', opacity: effectiveScrolled ? 0 : 1 }}
+              />
+              <img
+                src="/images/vibewear-logo-black.png"
+                alt=""
+                aria-hidden="true"
+                className="zttw-nav__logo zttw-nav__logo--layer"
+                style={{ height: '40px', opacity: effectiveScrolled ? 1 : 0 }}
+              />
+            </span>
           </Link>
         </div>
 
         {/* CENTER: logo — white over the transparent hero, black once scrolled. Desktop only. */}
         <div className="zttw-nav__center zttw-nav__center-desktop">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
-            <img
-              style={{height: "50px"}}
-              src={effectiveScrolled ? '/images/vibewear-logo-black.png' : '/images/vibewear-logo-white.png'}
-              alt="Vibe Wear"
-              className="zttw-nav__logo"
-            />
+            <span className="zttw-nav__logo-stack" style={{ height: '50px', width: '108px' }}>
+              <img
+                src="/images/vibewear-logo-white.png"
+                alt="Vibe Wear"
+                className="zttw-nav__logo zttw-nav__logo--layer"
+                style={{ height: '50px', opacity: effectiveScrolled ? 0 : 1 }}
+              />
+              <img
+                src="/images/vibewear-logo-black.png"
+                alt=""
+                aria-hidden="true"
+                className="zttw-nav__logo zttw-nav__logo--layer"
+                style={{ height: '50px', opacity: effectiveScrolled ? 1 : 0 }}
+              />
+            </span>
           </Link>
         </div>
 
@@ -463,6 +485,15 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
         .zttw-nav__right  { justify-content: flex-end; gap: 1.2rem; }
 
         .zttw-nav__logo { height: 28px; width: auto; display: block; }
+
+        .zttw-nav__logo-stack { position: relative; display: inline-block; }
+        .zttw-nav__logo--layer {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: auto;
+          transition: opacity 0.35s ease;
+        }
 
         /* Mobile-only logo (left edge) — hidden on desktop, shown in the mobile media query below */
         .zttw-nav__logo-mobile-wrap { display: none; }
