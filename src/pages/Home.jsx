@@ -9,7 +9,7 @@ import InstagramEmbed from '../components/InstagramEmbed';
 import StoreShowcase from '../components/StoreShowcase';
 import CategoryShowcase from '../components/CategoryShowcase';
 import { igSliderImages } from '../data/products';
-import { fetchProducts, fetchInstagramPosts } from '../lib/api';
+import { fetchProducts, fetchInstagramPosts, bookAppointment } from '../lib/api';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STORE SHOWCASE PHOTO — edit this path, not StoreShowcase.jsx.
@@ -131,6 +131,108 @@ function IgSlider({ items, pageSize, columns, renderItem }) {
   );
 }
 
+// Book An Appointment — Full Name / Email / Message. Mirrors the Contact page's
+// form styling/pattern (client-side only for now — no dedicated backend endpoint
+// exists yet, so this shows a success state locally like Contact.jsx does).
+function BookAppointment() {
+  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
+  const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  const inputStyle = {
+    width: '100%', border: '1px solid #e5e5e5', borderRadius: '2px',
+    padding: '12px 14px', fontSize: '0.85rem', color: '#000',
+    outline: 'none', fontFamily: 'inherit', background: '#fff',
+    transition: 'border-color 0.2s',
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSubmitting(true);
+    try {
+      const res = await bookAppointment(formData);
+      if (res.success) {
+        setSubmitted(true);
+        setTimeout(() => setSubmitted(false), 5000);
+        setFormData({ name: '', email: '', message: '' });
+      } else {
+        setError(res.message || 'Something went wrong. Please try again.');
+      }
+    } catch {
+      setError('Something went wrong. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0', background: '#fafafa' }}>
+      <div style={{ maxWidth: 600, margin: '0 auto', padding: '0 1.5rem' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#000', marginBottom: '6px' }}>Book An Appointment</h2>
+          <p style={{ color: '#888', fontSize: '0.85rem' }}>In-person shopping experience</p>
+        </div>
+
+        <div style={{ border: '1px solid #f0f0f0', borderRadius: '4px', padding: '2rem', background: '#fff' }}>
+          {submitted ? (
+            <div style={{ textAlign: 'center', padding: '2rem 0' }}>
+              <div style={{ width: '48px', height: '48px', background: '#000', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 1rem' }}>
+                <svg width="20" height="20" fill="none" stroke="#fff" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="m5 12 5 5 9-9"/></svg>
+              </div>
+              <h3 style={{ fontWeight: 700, fontSize: '1.1rem', marginBottom: '6px' }}>Request Sent!</h3>
+              <p style={{ color: '#888', fontSize: '0.85rem' }}>We'll get back to you shortly to confirm your appointment.</p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <div>
+                <label style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', display: 'block', marginBottom: '6px' }}>Full Name</label>
+                <input name="name" type="text" value={formData.name}
+                  onChange={e => setFormData(p => ({ ...p, name: e.target.value }))}
+                  required placeholder="Your full name" style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#000'}
+                  onBlur={e => e.target.style.borderColor = '#e5e5e5'} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', display: 'block', marginBottom: '6px' }}>Email</label>
+                <input name="email" type="email" value={formData.email}
+                  onChange={e => setFormData(p => ({ ...p, email: e.target.value }))}
+                  required placeholder="you@email.com" style={inputStyle}
+                  onFocus={e => e.target.style.borderColor = '#000'}
+                  onBlur={e => e.target.style.borderColor = '#e5e5e5'} />
+              </div>
+              <div>
+                <label style={{ fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', display: 'block', marginBottom: '6px' }}>Message</label>
+                <textarea name="message" value={formData.message}
+                  onChange={e => setFormData(p => ({ ...p, message: e.target.value }))}
+                  required rows={4} placeholder="Tell us when you'd like to come in..."
+                  style={{ ...inputStyle, resize: 'vertical' }}
+                  onFocus={e => e.target.style.borderColor = '#000'}
+                  onBlur={e => e.target.style.borderColor = '#e5e5e5'} />
+              </div>
+              {error && (
+                <p style={{ color: '#c0392b', fontSize: '0.8rem', margin: 0 }}>{error}</p>
+              )}
+              <button type="submit" disabled={submitting}
+                style={{
+                  background: '#000', color: '#fff', border: 'none', padding: '14px', fontSize: '0.8rem',
+                  fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
+                  cursor: submitting ? 'default' : 'pointer', borderRadius: '2px', transition: 'opacity 0.2s',
+                  opacity: submitting ? 0.6 : 1,
+                }}
+                onMouseEnter={e => { if (!submitting) e.target.style.opacity = '0.85'; }}
+                onMouseLeave={e => { if (!submitting) e.target.style.opacity = '1'; }}>
+                {submitting ? 'Sending…' : 'Request Appointment'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Home() {
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
@@ -201,12 +303,18 @@ export default function Home() {
         <NewArrivalsShowcase products={newArrivals} loading={!serverLoaded} />
       )}
 
-      {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as before) */}
-      {(!serverLoaded || fits.length > 0) && (
-        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
+      {/* Top Products (All Products) — admin-curated highlight row, no cap: shows every matching product */}
+      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" limit={null} />
+
+      {/* ── Category showcase ── */}
+      <CategoryShowcase dark />
+
+      {/* Sales — admin-curated via the "Sales" section tag, falls back to products marked isSale */}
+      {(!serverLoaded || salesProducts.length > 0) && (
+        <NewArrivalsShowcase products={salesProducts} loading={!serverLoaded} title="Sales" viewAllLink="/products?filter=sales" showOriginalPrice />
       )}
 
-      {/* ── Store showcase #1 — between New Arrivals and Sales. Edit image/text/link via props. ── */}
+      {/* ── Store showcase — VISIT US IN PERSON. Sits between Sales and Curated For You. ── */}
        <StoreShowcase
         imageSide="left"
         imageWidth={60}
@@ -220,16 +328,13 @@ export default function Home() {
         buttonHref="/products"
       />
 
-      {/* Sales — admin-curated via the "Sales" section tag, falls back to products marked isSale */}
-      {(!serverLoaded || salesProducts.length > 0) && (
-        <NewArrivalsShowcase products={salesProducts} loading={!serverLoaded} title="Sales" viewAllLink="/products?filter=sales" showOriginalPrice />
+      {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as before) */}
+      {(!serverLoaded || fits.length > 0) && (
+        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
       )}
 
-      {/* ── Category showcase ── */}
-      <CategoryShowcase dark />
-
-      {/* Top Products (All Products) — admin-curated highlight row, no cap: shows every matching product */}
-      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" limit={null} />
+      {/* ── Book An Appointment — sits right after Curated For You ── */}
+      <BookAppointment />
 
       {/* ── Follow Us on Instagram ── */}
       <section style={{ borderTop: '1px solid #f0f0f0', padding: '4rem 0' }}>

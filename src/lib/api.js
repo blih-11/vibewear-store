@@ -123,6 +123,16 @@ export async function getUserOrders(uid) {
   return res.json();
 }
 
+// ── Appointments (public) ─────────────────────────────────────────────────────
+export async function bookAppointment({ name, email, message }) {
+  const res = await fetch(`${BASE}/appointments`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, email, message }),
+  });
+  return res.json();
+}
+
 // ── Instagram posts (public) ─────────────────────────────────────────────────
 export async function fetchInstagramPosts() {
   const res = await fetch(`${BASE}/instagram`);
