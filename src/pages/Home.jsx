@@ -257,10 +257,24 @@ export default function Home() {
       .finally(() => setIgLoaded(true));
   }, []);
 
+  // ── Section caps + New Arrivals → Top Products overflow ──────────────────────
+  // Both sections cap at 8 products. New Arrivals shows the 8 most recently
+  // created products (createdAt, newest first). Once a 9th is added, the
+  // oldest one that falls off gets picked up by Top Products (on top of
+  // whatever's manually tagged there) — filling its remaining slots, oldest
+  // overflow first. Once Top Products itself has 8, anything further simply
+  // isn't shown anywhere — no further cascading past that.
+  const SECTION_CAP = 8;
+
   // New Arrivals — admin-curated via the "New Arrivals" section tag. Falls back to
   // the isNew flag (existing behavior) until something's tagged.
   const newArrivalsRaw = products.filter(p => p.category?.includes('new-arrivals'));
-  const newArrivals = newArrivalsRaw.length > 0 ? newArrivalsRaw : products.filter(p => p.isNew);
+  const newArrivalsAll = (newArrivalsRaw.length > 0 ? newArrivalsRaw : products.filter(p => p.isNew))
+    .slice()
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // newest first
+
+  const newArrivals = newArrivalsAll.slice(0, SECTION_CAP);
+  const newArrivalsOverflow = newArrivalsAll.slice(SECTION_CAP); // the ones bumped off, oldest-of-the-newest first
 
   // Fits — admin-curated via the "Full Fits" category tag in the admin panel.
   // No random fallback: if nothing's tagged yet, the section simply doesn't render
@@ -274,11 +288,12 @@ export default function Home() {
   const salesRaw = products.filter(p => p.category?.includes('sales'));
   const salesProducts = salesRaw.length > 0 ? salesRaw : products.filter(p => p.isSale);
 
-  // Top Products — admin-curated via the "Top Products" section tag ONLY.
-  // No fallback to all products: if nothing is tagged yet, the section stays
-  // hidden (same behavior as Sales/Curated For You) instead of showing every
-  // product in the store.
-  const topProducts = products.filter(p => p.category?.includes('top-products'));
+  // Top Products — manually-tagged products first, then New Arrivals overflow
+  // fills any remaining slots (deduped), capped at SECTION_CAP total.
+  const topProductsManual = products.filter(p => p.category?.includes('top-products'));
+  const manualIds = new Set(topProductsManual.map(p => p._id));
+  const overflowToAdd = newArrivalsOverflow.filter(p => !manualIds.has(p._id));
+  const topProducts = [...topProductsManual, ...overflowToAdd].slice(0, SECTION_CAP);
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
