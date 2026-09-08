@@ -274,11 +274,11 @@ export default function Home() {
   const salesRaw = products.filter(p => p.category?.includes('sales'));
   const salesProducts = salesRaw.length > 0 ? salesRaw : products.filter(p => p.isSale);
 
-  // Top Products (formerly "All Products") — admin-curated via the "Top Products"
-  // section tag. Falls back to every product until something's tagged. No cap —
-  // this section shows every matching product, not just the first 10.
-  const topProductsRaw = products.filter(p => p.category?.includes('top-products'));
-  const topProducts = topProductsRaw.length > 0 ? topProductsRaw : products;
+  // Top Products — admin-curated via the "Top Products" section tag ONLY.
+  // No fallback to all products: if nothing is tagged yet, the section stays
+  // hidden (same behavior as Sales/Curated For You) instead of showing every
+  // product in the store.
+  const topProducts = products.filter(p => p.category?.includes('top-products'));
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh' }}>
@@ -303,8 +303,10 @@ export default function Home() {
         <NewArrivalsShowcase products={newArrivals} loading={!serverLoaded} />
       )}
 
-      {/* Top Products (All Products) — admin-curated highlight row, no cap: shows every matching product */}
-      <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" limit={null} />
+      {/* Top Products — admin-curated only, hidden until products are assigned to this section */}
+      {(!serverLoaded || topProducts.length > 0) && (
+        <NewArrivalsShowcase products={topProducts} loading={!serverLoaded} title="Top Products" viewAllLink="/products?filter=top-products" limit={null} />
+      )}
 
       {/* ── Category showcase ── */}
       <CategoryShowcase dark />
