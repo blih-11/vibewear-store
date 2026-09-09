@@ -1,12 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { createOrder } from '../lib/api';
+import { createOrder, verifyPayment } from '../lib/api';
 import { useCurrency } from '../context/CurrencyContext';
 import { useAuth } from '../context/AuthContext';
 
 const WHATSAPP_NUMBER = '233XXXXXXXXX';
 const INSTAGRAM_USERNAME = 'vibewear_';
+
+// Paystack PUBLIC key — safe to expose in frontend code (that's what it's for).
+// Set VITE_PAYSTACK_PUBLIC_KEY in your .env / Netlify env vars; the fallback
+// below is just a placeholder so the app doesn't crash if it's missing —
+// replace it with your real pk_test_... / pk_live_... key.
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_REPLACE_ME';
 
 const COUNTRIES = [
   'Ghana','Nigeria','United States','United Kingdom','Canada','Australia',
@@ -58,10 +64,27 @@ export default function Checkout() {
   const { user, logout } = useAuth();
 
   const itemCount   = cartItems.reduce((s, i) => s + i.quantity, 0);
-  const shippingFee = cartTotal >= 200 ? 0 : 10;
+
+  // ── Weight-based shipping ─────────────────────────────────────────────────
+  // Rate: ₵5 per kg, based on each product's admin-set weight (defaults to
+  // 0.3kg for anything not yet weighed). Free shipping still kicks in above
+  // ₵200 subtotal.
+  const SHIPPING_RATE_PER_KG = 5;
+  const FREE_SHIPPING_THRESHOLD = 200;
+  const DEFAULT_ITEM_WEIGHT_KG = 0.3;
+
+  const totalWeightKg = cartItems.reduce(
+    (sum, i) => sum + (Number(i.weight) > 0 ? Number(i.weight) : DEFAULT_ITEM_WEIGHT_KG) * i.quantity,
+    0
+  );
+  const shippingFee = cartTotal >= FREE_SHIPPING_THRESHOLD
+    ? 0
+    : Math.round(totalWeightKg * SHIPPING_RATE_PER_KG * 100) / 100;
+
   const grandTotal  = cartTotal + shippingFee;
 
   const [orderError, setOrderError] = useState('');
+  const [cardError, setCardError] = useState('');
   const [errors, setErrors]   = useState({});
   const [loadingChannel, setLoadingChannel] = useState(null); // 'whatsapp' | 'instagram' | null
   const [summaryOpen, setSummaryOpen] = useState(false); // mobile collapsible order summary
@@ -91,6 +114,17 @@ export default function Checkout() {
   }, [user]);
 
   useEffect(() => { if (!cartItems.length) navigate('/cart'); }, [cartItems]);
+
+  // Load the Paystack Inline JS library once. Guarded so remounts / other
+  // pages don't inject it twice.
+  useEffect(() => {
+    if (window.PaystackPop || document.getElementById('paystack-inline-js')) return;
+    const script = document.createElement('script');
+    script.id = 'paystack-inline-js';
+    script.src = 'https://js.paystack.co/v1/inline.js';
+    script.async = true;
+    document.body.appendChild(script);
+  }, []);
 
   const set = (k) => (e) => {
     setForm(f => ({ ...f, [k]: e.target.value }));
@@ -159,6 +193,67 @@ export default function Checkout() {
 
   const handleWhatsApp  = () => createChannelOrder('whatsapp');
   const handleInstagram = () => createChannelOrder('instagram');
+
+  // Card payment — different shape from WhatsApp/Instagram: no "here's your
+  // Order ID, now go send it" hand-off. We create the order (channel: 'card',
+  // starts 'pending'), immediately open the Paystack popup, and on success
+  // ask our own backend to re-verify the transaction with Paystack's secret
+  // key before marking the order 'completed' and moving on.
+  const handleCard = async () => {
+    if (!user) { navigate('/auth?redirect=checkout'); return; }
+    if (!validate()) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+    if (!window.PaystackPop) {
+      setCardError('Payment is still loading — please wait a moment and try again.');
+      return;
+    }
+    setCardError('');
+    setLoadingChannel('card');
+
+    try {
+      const res = await createOrder(buildOrderPayload('card'));
+      if (!res.success) throw new Error(res.message || 'Could not create order');
+      const newOrder = res.order;
+
+      const handler = window.PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: user.email,
+        amount: Math.round(grandTotal * 100), // GHS → pesewas
+        currency: 'GHS',
+        ref: newOrder.orderNumber,
+        metadata: { order_id: newOrder._id, order_number: newOrder.orderNumber },
+        callback: (response) => {
+          (async () => {
+            try {
+              const verifyRes = await verifyPayment({ reference: response.reference, orderId: newOrder._id });
+              if (!verifyRes.success) throw new Error(verifyRes.message || 'Payment could not be verified.');
+              clearCart();
+              navigate('/order-success', {
+                state: {
+                  orderNumber: newOrder.orderNumber, channel: 'card', amount: formatPrice(grandTotal),
+                  customer: { ...form, email: user.email }, items: cartItems,
+                },
+              });
+            } catch (err) {
+              setCardError(
+                `Payment went through but couldn't be confirmed automatically (Order ${newOrder.orderNumber}). ` +
+                `Please contact us with your Order ID so we can confirm it manually.`
+              );
+            } finally {
+              setLoadingChannel(null);
+            }
+          })();
+        },
+        onClose: () => {
+          setLoadingChannel(null);
+          setCardError('Payment cancelled — you can try again, or use WhatsApp/Instagram instead.');
+        },
+      });
+      handler.openIframe();
+    } catch (err) {
+      setCardError(err.message || 'Something went wrong starting payment. Please try again.');
+      setLoadingChannel(null);
+    }
+  };
 
   const copyOrderId = async () => {
     if (!order) return;
@@ -376,7 +471,9 @@ export default function Checkout() {
             <h2 className="text-black text-xl font-bold mb-4">Shipping method</h2>
             <div className="mb-8">
               <OptionRow selected>
-                <span className="text-black text-sm font-medium">Standard</span>
+                <span className="text-black text-sm font-medium">
+                  Standard <span className="text-gray-400 font-normal">· {totalWeightKg.toFixed(2)}kg</span>
+                </span>
                 <span className="text-black text-sm font-medium">{shippingFee === 0 ? 'FREE' : formatPrice(shippingFee)}</span>
               </OptionRow>
             </div>
@@ -384,21 +481,33 @@ export default function Checkout() {
             {/* ── Payment ── */}
             <h2 className="text-black text-xl font-bold mb-1">Payment</h2>
             <p className="text-gray-400 text-xs mb-4">All transactions are secure and encrypted.</p>
+            {cardError && (
+              <div className="px-4 py-2.5 rounded-lg text-xs font-medium bg-red-50 text-red-500 border border-red-200 mb-3">
+                {cardError}
+              </div>
+            )}
             <div className="mb-2">
-              <OptionRow disabled>
-                <span className="flex items-center gap-2 text-gray-400 text-sm font-medium">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="1.6"/>
-                    <line x1="1" y1="10" x2="23" y2="10" strokeWidth="1.6"/>
-                  </svg>
-                  Card Payment
+              <OptionRow onClick={handleCard} disabled={!!loadingChannel && loadingChannel !== 'card'}>
+                <span className="flex items-center gap-2 text-black text-sm font-medium">
+                  {loadingChannel === 'card' ? (
+                    <svg className="w-4 h-4 animate-spin text-gray-400" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+                    </svg>
+                  ) : (
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="1.6"/>
+                      <line x1="1" y1="10" x2="23" y2="10" strokeWidth="1.6"/>
+                    </svg>
+                  )}
+                  {loadingChannel === 'card' ? 'Processing…' : 'Pay with Card'}
                 </span>
-                <span className="text-gray-400 text-xs font-semibold uppercase tracking-wide">Coming Soon</span>
+                <span className="text-gray-400 text-[11px] font-semibold uppercase tracking-wide">Paystack</span>
               </OptionRow>
             </div>
             <div className="bg-gray-50 border border-gray-200 rounded-lg px-4 py-3 mb-8">
               <p className="text-gray-400 text-xs text-center">
-                Online payment isn't live yet — get your Order ID below and send it to us to confirm and arrange payment.
+                Or get your Order ID below and send it to us via WhatsApp/Instagram to arrange payment manually.
               </p>
             </div>
 

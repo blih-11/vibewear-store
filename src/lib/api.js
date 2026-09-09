@@ -133,6 +133,16 @@ export async function bookAppointment({ name, email, message }) {
   return res.json();
 }
 
+// ── Payments (public) — Paystack ─────────────────────────────────────────────
+export async function verifyPayment({ reference, orderId }) {
+  const res = await fetch(`${BASE}/payments/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ reference, orderId }),
+  });
+  return res.json();
+}
+
 // ── Instagram posts (public) ─────────────────────────────────────────────────
 export async function fetchInstagramPosts() {
   const res = await fetch(`${BASE}/instagram`);
