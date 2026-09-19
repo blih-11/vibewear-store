@@ -19,20 +19,12 @@ import OrderSuccess from './pages/OrderSuccess';
 import Auth from './pages/Auth';
 import Orders from './pages/Orders';
 import { trackActivity } from './lib/api';
+import { getGuestId } from './lib/guestId';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
   return null;
-}
-
-function getGuestId() {
-  let id = localStorage.getItem('vw_guest_id');
-  if (!id) {
-    id = 'guest_' + Math.random().toString(36).slice(2) + Date.now().toString(36);
-    localStorage.setItem('vw_guest_id', id);
-  }
-  return id;
 }
 
 function AppContent() {

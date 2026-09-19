@@ -4,7 +4,6 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import ProductCard from '../components/ProductCard';
 import PageLoader from '../components/PageLoader';
-import PagedCarousel from '../components/PagedCarousel';
 import Seo from '../components/Seo';
 import { optimizeImage } from '../lib/optimizeImage';
 
@@ -140,8 +139,12 @@ export default function ProductDetail() {
             <div className="pd-main-images">
               {images.map((img, i) => (
                 <div key={i} ref={el => imgRefs.current[i] = el}
-                  style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
-                  <img src={optimizeImage(img, { width: 1000 })} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                  style={{
+                    width: '100%', aspectRatio: '4/5', maxHeight: '80vh', overflow: 'hidden', background: '#f8f8f8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }}>
+                  <img src={optimizeImage(img, { width: 1000 })} alt={product.name}
+                    style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                 </div>
               ))}
             </div>
@@ -149,9 +152,12 @@ export default function ProductDetail() {
 
           {/* ── Mobile gallery: one large main image + horizontal thumbnail strip below ── */}
           <div className="pd-gallery-mobile">
-            <div style={{ aspectRatio: '4/5', overflow: 'hidden', background: '#f8f8f8' }}>
+            <div style={{
+              width: '100%', aspectRatio: '4/5', maxHeight: '65vh', overflow: 'hidden', background: '#f8f8f8',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
               <img src={optimizeImage(images[selectedImg] || product.image, { width: 900 })} alt={product.name}
-                style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', objectFit: 'contain', mixBlendMode: 'multiply' }} />
             </div>
             {images.length > 1 && (
               <div className="pd-thumbs-mobile">
@@ -273,14 +279,8 @@ export default function ProductDetail() {
           <div style={{ borderTop: '1px solid #f0f0f0', paddingTop: '3rem', marginTop: '4rem' }}>
             <h2 style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '1.5rem' }}>You May Also Like</h2>
 
-            {/* Desktop / tablet: regular grid (unchanged) */}
-            <div className="pd-related__grid-desktop" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px' }}>
+            <div className="pd-related__grid">
               {related.map(p => <ProductCard key={p._id} product={p} />)}
-            </div>
-
-            {/* Mobile: paged carousel, 2 products per page / 2-column, swipe or dots to move */}
-            <div className="pd-related__carousel-mobile">
-              <PagedCarousel items={related} pageSize={2} columns={2} renderItem={(p) => <ProductCard key={p._id} product={p} />} />
             </div>
           </div>
         )}
@@ -327,8 +327,12 @@ export default function ProductDetail() {
         /* Mobile gallery hidden on desktop by default */
         .pd-gallery-mobile { display: none; }
 
-        /* Related ("You May Also Like") — desktop grid shown by default, mobile carousel hidden */
-        .pd-related__carousel-mobile { display: none; }
+        /* Related ("You May Also Like") */
+        .pd-related__grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+          gap: 16px;
+        }
 
         @media (max-width: 900px) {
           .pd-grid { grid-template-columns: 1fr; gap: 2rem; }
@@ -348,8 +352,11 @@ export default function ProductDetail() {
           }
           .pd-thumbs-mobile::-webkit-scrollbar { display: none; }
 
-          .pd-related__grid-desktop { display: none; }
-          .pd-related__carousel-mobile { display: block; }
+          /* Always exactly 2 columns on small screens — no collapsing to a single big card */
+          .pd-related__grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
         }
       `}</style>
     </div>

@@ -21,7 +21,7 @@ export default function Contact() {
 
   const contactItems = [
     {
-      label: 'Email Us', value: 'hello@vibewear.com', href: 'mailto:hello@vibewear.com',
+      label: 'Email Us', value: 'vibewear12@gmail.com', href: 'mailto:vibewear12@gmail.com',
       icon: <svg width="18" height="18" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
     },
     {

@@ -118,8 +118,10 @@ export async function createOrder(orderData) {
   return res.json();
 }
 
-export async function getUserOrders(uid) {
-  const res = await fetch(`${BASE}/orders/${uid}`);
+export async function getUserOrders(uid, idToken) {
+  const res = await fetch(`${BASE}/orders/${uid}`, {
+    headers: idToken ? { Authorization: `Bearer ${idToken}` } : {},
+  });
   return res.json();
 }
 

@@ -26,7 +26,7 @@ export default function OrderSuccess() {
   if (!state) return null;
 
   const { txRef, transactionId, orderNumber, channel, amount, customer, items } = state;
-  const isManual = !!orderNumber && !!channel;
+  const isManual = !!orderNumber && !!CHANNEL_INFO[channel];
   const channelInfo = CHANNEL_INFO[channel];
 
   const copyOrderId = async () => {

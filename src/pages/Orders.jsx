@@ -23,7 +23,8 @@ export default function Orders() {
 
   useEffect(() => {
     if (!user) return;
-    getUserOrders(user.uid)
+    user.getIdToken()
+      .then(idToken => getUserOrders(user.uid, idToken))
       .then(data => { if (data.success) setOrders(data.orders); })
       .catch(() => {})
       .finally(() => setLoading(false));

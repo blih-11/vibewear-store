@@ -283,10 +283,9 @@ export default function Home() {
   // (fullfit) is unchanged, this is just the storefront-facing section title.
   const fits = products.filter(p => p.category?.includes('fullfit'));
 
-  // Sales — admin-curated via the "Sales" section tag. Falls back to products
-  // marked isSale until something's explicitly tagged.
-  const salesRaw = products.filter(p => p.category?.includes('sales'));
-  const salesProducts = salesRaw.length > 0 ? salesRaw : products.filter(p => p.isSale);
+  // Note: "Sales" no longer has a homepage section — it now lives as its own
+  // link in the nav bar (see Navbar.jsx), pointing straight to
+  // /products?filter=sales, which does its own isSale/category filtering.
 
   // Top Products — manually-tagged products first, then New Arrivals overflow
   // fills any remaining slots (deduped), capped at SECTION_CAP total.
@@ -326,12 +325,14 @@ export default function Home() {
       {/* ── Category showcase ── */}
       <CategoryShowcase dark />
 
-      {/* Sales — admin-curated via the "Sales" section tag, falls back to products marked isSale */}
-      {(!serverLoaded || salesProducts.length > 0) && (
-        <NewArrivalsShowcase products={salesProducts} loading={!serverLoaded} title="Sales" viewAllLink="/products?filter=sales" showOriginalPrice />
+      {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as
+          before). Sales used to sit here; it's been moved into its own nav-bar section instead,
+          so Curated For You now takes this slot right after the category showcase. */}
+      {(!serverLoaded || fits.length > 0) && (
+        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
       )}
 
-      {/* ── Store showcase — VISIT US IN PERSON. Sits between Sales and Curated For You. ── */}
+      {/* ── Store showcase — VISIT US IN PERSON. Sits between Curated For You and Book An Appointment. ── */}
        <StoreShowcase
         imageSide="left"
         imageWidth={60}
@@ -344,11 +345,6 @@ export default function Home() {
         buttonLabel="SHOP NOW"
         buttonHref="/products"
       />
-
-      {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as before) */}
-      {(!serverLoaded || fits.length > 0) && (
-        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
-      )}
 
       {/* ── Book An Appointment — sits right after Curated For You ── */}
       <BookAppointment />

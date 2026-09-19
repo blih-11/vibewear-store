@@ -56,7 +56,7 @@ export default function Products() {
         p.category?.some(c => c.toLowerCase().includes(q))
       );
     }
-    if (activeFilter === 'sale') list = list.filter(p => p.isSale);
+    if (activeFilter === 'sale' || activeFilter === 'sales') list = list.filter(p => p.isSale);
     else if (activeFilter === 'new-arrivals') list = list.filter(p => p.isNew);
     else if (activeFilter !== 'all') list = list.filter(p => p.category?.includes(activeFilter));
     if (sort === 'price-asc') list.sort((a, b) => a.price - b.price);
@@ -87,7 +87,9 @@ export default function Products() {
         {/* Header */}
         <div style={{ marginBottom: '2rem', paddingTop: '1rem' }}>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, color: '#000', letterSpacing: '0.04em' }}>
-            {allCategories.find(c => c.id === activeFilter)?.label || 'Shop'}
+            {(activeFilter === 'sale' || activeFilter === 'sales')
+              ? 'Sales'
+              : (allCategories.find(c => c.id === activeFilter)?.label || 'Shop')}
           </h1>
           <p style={{ color: '#aaa', fontSize: '0.82rem', marginTop: '4px' }}>
             {loading ? 'Loading products...' : `${filtered.length} products`}

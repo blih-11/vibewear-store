@@ -105,6 +105,7 @@ export default function NewArrivalsShowcase({
         .na-showcase__carousel-mobile { display: none; }
 
         .na-showcase__card {
+        background: #F8F8F8;
           flex: 0 0 auto;
           width: calc((100% - 80px) / 5);
           cursor: pointer;
@@ -113,7 +114,7 @@ export default function NewArrivalsShowcase({
 
         .na-showcase__img {
           aspect-ratio: 3/4;
-          border: 1px solid #ddd;
+          // border: 1px solid #ddd;
           display: flex;
           align-items: center;
           justify-content: center;

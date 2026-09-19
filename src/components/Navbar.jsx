@@ -155,6 +155,14 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
             </div>
 
             <Link
+              to="/products?filter=sales"
+              className="zttw-nav__link"
+              style={{ color: iconColor, borderBottomColor: (isActive('/products') && location.search.includes('filter=sales')) ? iconColor : 'transparent' }}
+            >
+              Sales
+            </Link>
+
+            <Link
               to="/contact"
               className="zttw-nav__link"
               style={{ color: iconColor, borderBottomColor: isActive('/contact') ? iconColor : 'transparent' }}
@@ -404,6 +412,17 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
           >
             Shop
           </button>
+
+          <Link
+            to="/products?filter=sales"
+            onClick={() => setMenuOpen(false)}
+            style={{
+              display: 'block', padding: '1rem 0', borderBottom: '1px solid #e0e0e0', textDecoration: 'none',
+              color: '#333', fontSize: '0.9rem', letterSpacing: '0.06em', textTransform: 'uppercase',
+            }}
+          >
+            Sales
+          </Link>
 
           <Link
             to="/contact"
