@@ -222,10 +222,20 @@ export default function Checkout() {
       if (!res.success) throw new Error(res.message || 'Could not create order');
       const newOrder = res.order;
 
+      // Paystack (Ghana) only accepts GHS — newOrder.totalGHS is the server's
+      // own USD→GHS conversion of the real, server-priced order total. We
+      // deliberately don't compute this ourselves from `grandTotal` (which is
+      // in USD, the site's base currency for all displayed prices) — that
+      // would charge the raw USD number as if it were GHS, undercharging by
+      // roughly the exchange rate itself.
+      if (!newOrder.totalGHS) {
+        throw new Error('Could not determine the payment amount. Please refresh and try again.');
+      }
+
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: form.email.trim(),
-        amount: Math.round(grandTotal * 100), // GHS → pesewas
+        amount: Math.round(newOrder.totalGHS * 100), // GHS → pesewas
         currency: 'GHS',
         channels: [method],
         ref: newOrder.orderNumber,
