@@ -2,36 +2,21 @@ import { useState, useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { useCurrency, CURRENCIES } from '../context/CurrencyContext';
 import { allProductsEntry } from '../data/categories';
 import { useShopCategories } from '../hooks/useShopCategories';
 
 // Emoji flags don't render reliably on every OS (notably Windows), so we use small
 // flag images from a CDN instead — falls back to the emoji glyph if no country code is set.
-function FlagIcon({ currency, size = 16 }) {
-  if (!currency?.cc) return <span style={{ fontSize: size * 0.9 }}>{currency?.flag}</span>;
-  return (
-    <img
-      src={`https://flagcdn.com/w40/${currency.cc}.png`}
-      alt={currency.code}
-      width={size}
-      height={size * 0.75}
-      style={{ objectFit: 'cover', borderRadius: '2px', display: 'inline-block', flexShrink: 0 }}
-    />
-  );
-}
 
 export default function Navbar() {  const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
-  const [currencyOpen, setCurrencyOpen] = useState(false);
   const [shopOpen, setShopOpen] = useState(false);       // desktop dropdown
   const [mobileShopOpen, setMobileShopOpen] = useState(false); // mobile accordion
   const [photoError, setPhotoError] = useState(false); // fall back to the default icon if the Google photo URL fails to load
   const { cartCount, setSearchOpen } = useCart();
   const shopCategories = useShopCategories();
   const { user, logout } = useAuth();
-  const { currency, setCurrency, currentCurrency } = useCurrency();
   const location = useLocation();
   const accountRef = useRef(null);
   const shopRef = useRef(null);
@@ -219,50 +204,6 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
 
         {/* RIGHT */}
         <div className="zttw-nav__right">
-          {/* Currency (desktop) */}
-          <div className="desktop-only" style={{ position: 'relative' }}>
-            <button onClick={() => setCurrencyOpen(o => !o)} style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '4px',
-              fontFamily: 'var(--font-body)', fontSize: '0.72rem',
-              color: iconColor, transition: 'color 0.3s ease',
-            }}>
-              <FlagIcon currency={currentCurrency} size={16} />
-              <span>{currency}</span>
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-                style={{ transform: currencyOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>
-                <path d="m6 9 6 6 6-6"/>
-              </svg>
-            </button>
-            {currencyOpen && (
-              <>
-                <div style={{ position: 'fixed', inset: 0, zIndex: 149 }} onClick={() => setCurrencyOpen(false)} />
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 8px)', right: 0,
-                  background: '#fff', border: '1px solid #e5e5e5',
-                  borderRadius: '12px', padding: '6px', minWidth: '190px',
-                  zIndex: 150, boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
-                  maxHeight: '300px', overflowY: 'auto',
-                }}>
-                  {CURRENCIES.map(cur => (
-                    <button key={cur.code} onClick={() => { setCurrency(cur.code); setCurrencyOpen(false); }}
-                      style={{
-                        width: '100%', display: 'flex', alignItems: 'center', gap: '10px',
-                        padding: '8px 10px', borderRadius: '8px', border: 'none',
-                        background: currency === cur.code ? '#f5f5f5' : 'transparent',
-                        cursor: 'pointer', color: currency === cur.code ? '#000' : '#666',
-                      }}>
-                      <FlagIcon currency={cur} size={18} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '0.72rem', flex: 1, textAlign: 'left' }}>{cur.code}</span>
-                      {currency === cur.code && (
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><path d="m5 12 5 5 9-9"/></svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
 
           {/* Search */}
           <button onClick={() => setSearchOpen && setSearchOpen(true)}
@@ -461,21 +402,6 @@ export default function Navbar() {  const [scrolled, setScrolled] = useState(fal
           )}
         </div>
 
-        <div style={{ padding: '1.5rem', display: 'flex', flexWrap: 'wrap', gap: '8px', borderTop: '1px solid #e0e0e0' }}>
-          {CURRENCIES.slice(0, 6).map(cur => (
-            <button key={cur.code} onClick={() => { setCurrency(cur.code); }}
-              style={{
-                padding: '6px 12px', borderRadius: '8px', border: '1px solid',
-                borderColor: currency === cur.code ? '#000' : '#ccc',
-                background: currency === cur.code ? '#000' : 'transparent',
-                color: currency === cur.code ? '#fff' : '#333',
-                fontSize: '0.72rem', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '4px',
-              }}>
-              <FlagIcon currency={cur} size={14} /> {cur.code}
-            </button>
-          ))}
-        </div>
         </>
         )}
       </div>

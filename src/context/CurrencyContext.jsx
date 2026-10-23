@@ -1,117 +1,34 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext } from 'react';
 
-export const CURRENCIES = [
-  { code: 'GHS', symbol: '₵', name: 'Ghana Cedi',          flag: '🇬🇭', cc: 'gh', locale: 'en-GH' },
-  { code: 'USD', symbol: '$', name: 'US Dollar',            flag: '🇺🇸', cc: 'us', locale: 'en-US' },
-  { code: 'GBP', symbol: '£', name: 'British Pound',        flag: '🇬🇧', cc: 'gb', locale: 'en-GB' },
-  { code: 'EUR', symbol: '€', name: 'Euro',                 flag: '🇪🇺', cc: 'eu', locale: 'de-DE' },
-  { code: 'NGN', symbol: '₦', name: 'Nigerian Naira',       flag: '🇳🇬', cc: 'ng', locale: 'en-NG' },
-  { code: 'ZAR', symbol: 'R', name: 'South African Rand',   flag: '🇿🇦', cc: 'za', locale: 'en-ZA' },
-  { code: 'CAD', symbol: 'CA$', name: 'Canadian Dollar',    flag: '🇨🇦', cc: 'ca', locale: 'en-CA' },
-  { code: 'AUD', symbol: 'A$', name: 'Australian Dollar',   flag: '🇦🇺', cc: 'au', locale: 'en-AU' },
-  { code: 'KES', symbol: 'KSh', name: 'Kenyan Shilling',    flag: '🇰🇪', cc: 'ke', locale: 'sw-KE' },
-  { code: 'XOF', symbol: 'CFA', name: 'West African CFA',   flag: '🌍', cc: 'sn', locale: 'fr-SN' },
-];
+// Vibe Wear sells in ONE currency only: Ghana Cedis (GHS), for every customer in
+// every country. Prices are stored in GHS in the database and shown exactly as
+// stored — no exchange-rate fetching, no country detection, no currency switcher.
+// What's shown on the site is exactly what Paystack charges.
+export const CURRENCY = { code: 'GHS', symbol: '₵', name: 'Ghana Cedi', flag: '🇬🇭', cc: 'gh', locale: 'en-GH' };
 
-// Country code → currency code map for auto-detection
-const COUNTRY_CURRENCY = {
-  GH: 'GHS', US: 'USD', GB: 'GBP', CA: 'CAD', AU: 'AUD',
-  NG: 'NGN', ZA: 'ZAR', KE: 'KES',
-  SN: 'XOF', CI: 'XOF', BF: 'XOF', ML: 'XOF', NE: 'XOF', TG: 'XOF', BJ: 'XOF', GW: 'XOF',
-  DE: 'EUR', FR: 'EUR', IT: 'EUR', ES: 'EUR', NL: 'EUR', BE: 'EUR', PT: 'EUR', IE: 'EUR',
+function formatGHS(amount) {
+  const n = Number(amount);
+  if (!Number.isFinite(n)) return '—';
+  try {
+    return new Intl.NumberFormat(CURRENCY.locale, {
+      style: 'currency', currency: 'GHS', minimumFractionDigits: 2, maximumFractionDigits: 2,
+    }).format(n);
+  } catch {
+    return `${CURRENCY.symbol}${n.toFixed(2)}`;
+  }
+}
+
+const value = {
+  currency: CURRENCY.code,
+  currentCurrency: CURRENCY,
+  formatPrice: formatGHS,
+  convert: (amount) => amount, // GHS in = GHS out; kept so existing callers keep working
 };
 
-// Fallback rates (USD base) — used if API call fails
-const FALLBACK_RATES = {
-  GHS: 15.5, USD: 1, GBP: 0.79, EUR: 0.92, NGN: 1580,
-  ZAR: 18.5, CAD: 1.36, AUD: 1.53, KES: 130, XOF: 600,
-};
-
-const CurrencyContext = createContext(null);
+const CurrencyContext = createContext(value);
 
 export function CurrencyProvider({ children }) {
-  const [currency, setCurrencyState] = useState(() => {
-    return localStorage.getItem('vw_currency') || 'GHS';
-  });
-  const [rates, setRates] = useState(FALLBACK_RATES);
-  const [ratesLoaded, setRatesLoaded] = useState(false);
-  const [detecting, setDetecting] = useState(false);
-
-  // Fetch live exchange rates (USD base)
-  useEffect(() => {
-    const cached = sessionStorage.getItem('vw_rates');
-    if (cached) {
-      try { setRates(JSON.parse(cached)); setRatesLoaded(true); return; } catch {}
-    }
-    fetch('https://api.exchangerate-api.com/v4/latest/USD')
-      .then(r => r.json())
-      .then(data => {
-        if (data?.rates) {
-          setRates(data.rates);
-          sessionStorage.setItem('vw_rates', JSON.stringify(data.rates));
-        }
-        setRatesLoaded(true);
-      })
-      .catch(() => { setRatesLoaded(true); }); // silently fall back
-  }, []);
-
-  // Auto-detect country on first visit
-  useEffect(() => {
-    if (localStorage.getItem('vw_currency')) return; // user already chose
-    setDetecting(true);
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(data => {
-        const detected = COUNTRY_CURRENCY[data?.country_code] || 'GHS';
-        setCurrencyState(detected);
-        localStorage.setItem('vw_currency', detected);
-      })
-      .catch(() => {}) // stay on GHS default
-      .finally(() => setDetecting(false));
-  }, []);
-
-  const setCurrency = useCallback((code) => {
-    setCurrencyState(code);
-    localStorage.setItem('vw_currency', code);
-  }, []);
-
-  // Convert from USD to selected currency
-  const convert = useCallback((usdAmount) => {
-    const rate = rates[currency] ?? FALLBACK_RATES[currency] ?? 1;
-    return usdAmount * rate;
-  }, [rates, currency]);
-
-  // Format a USD amount into the selected currency string
-  const formatPrice = useCallback((usdAmount) => {
-    const cur = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
-    const converted = convert(usdAmount);
-
-    // For currencies with large numbers, no decimals
-    const noDecimals = ['NGN', 'KES', 'XOF'].includes(currency);
-
-    try {
-      return new Intl.NumberFormat(cur.locale, {
-        style: 'currency',
-        currency: currency,
-        minimumFractionDigits: noDecimals ? 0 : 2,
-        maximumFractionDigits: noDecimals ? 0 : 2,
-      }).format(converted);
-    } catch {
-      return `${cur.symbol}${converted.toFixed(noDecimals ? 0 : 2)}`;
-    }
-  }, [currency, convert]);
-
-  const currentCurrency = CURRENCIES.find(c => c.code === currency) || CURRENCIES[0];
-
-  return (
-    <CurrencyContext.Provider value={{
-      currency, setCurrency, currencies: CURRENCIES,
-      currentCurrency, formatPrice, convert,
-      ratesLoaded, detecting,
-    }}>
-      {children}
-    </CurrencyContext.Provider>
-  );
+  return <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>;
 }
 
 export function useCurrency() {

@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../lib/optimizeImage';
+import { productPath } from '../lib/productUrl';
 
 export default function ProductCard({ product }) {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export default function ProductCard({ product }) {
   };
   const handleCardClick = () => {
     if (wasDragging.current) { wasDragging.current = false; return; }
-    navigate(`/products/${product._id || product.id}`);
+    navigate(productPath(product));
   };
 
   return (

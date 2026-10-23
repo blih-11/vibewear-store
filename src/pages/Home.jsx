@@ -5,11 +5,12 @@ import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import HeroBanners from '../components/HeroBanners';
 import NewArrivalsShowcase from '../components/NewArrivalsShowcase';
+import FitsShowcase from '../components/FitsShowcase';
 import InstagramEmbed from '../components/InstagramEmbed';
 import StoreShowcase from '../components/StoreShowcase';
 import CategoryShowcase from '../components/CategoryShowcase';
 import { igSliderImages } from '../data/products';
-import { fetchProducts, fetchInstagramPosts, bookAppointment } from '../lib/api';
+import { fetchProducts, fetchFits, fetchInstagramPosts, bookAppointment } from '../lib/api';
 
 // ═══════════════════════════════════════════════════════════════════════════
 // STORE SHOWCASE PHOTO — edit this path, not StoreShowcase.jsx.
@@ -238,6 +239,10 @@ export default function Home() {
   const [products, setProducts] = useState([]);
   const [serverLoaded, setServerLoaded] = useState(false);
 
+  const fullFitProducts = products.filter(p => p.category?.includes('fullfit'));
+  const [fitBundles, setFitBundles] = useState([]); // admin-curated outfits for "Curated For You"
+  const [fitsLoaded, setFitsLoaded] = useState(false);
+
   const [igPosts, setIgPosts] = useState([]); // real posts added via the admin panel
   const [igLoaded, setIgLoaded] = useState(false);
 
@@ -248,6 +253,13 @@ export default function Home() {
       })
       .catch(() => {})
       .finally(() => setServerLoaded(true));
+  }, []);
+
+  useEffect(() => {
+    fetchFits()
+      .then(data => { if (data.success) setFitBundles((data.fits || []).filter(f => f.items?.length >= 2)); })
+      .catch(() => {})
+      .finally(() => setFitsLoaded(true));
   }, []);
 
   useEffect(() => {
@@ -281,7 +293,6 @@ export default function Home() {
   // (see the conditional render below) rather than showing an arbitrary sample.
   // Displayed on the homepage as "Curated For You" — the underlying tag/filter
   // (fullfit) is unchanged, this is just the storefront-facing section title.
-  const fits = products.filter(p => p.category?.includes('fullfit'));
 
   // Note: "Sales" no longer has a homepage section — it now lives as its own
   // link in the nav bar (see Navbar.jsx), pointing straight to
@@ -328,8 +339,8 @@ export default function Home() {
       {/* Curated For You — full-fit / complete-outfit products (same underlying "fullfit" tag as
           before). Sales used to sit here; it's been moved into its own nav-bar section instead,
           so Curated For You now takes this slot right after the category showcase. */}
-      {(!serverLoaded || fits.length > 0) && (
-        <NewArrivalsShowcase products={fits} loading={!serverLoaded} title="Curated For You" viewAllLink="/products?filter=fullfit" />
+      {(!fitsLoaded || !serverLoaded || fitBundles.length > 0 || fullFitProducts.length > 0) && (
+        <FitsShowcase fits={fitBundles} products={fullFitProducts} loading={!fitsLoaded || !serverLoaded} title="Curated For You" />
       )}
 
       {/* ── Store showcase — VISIT US IN PERSON. Sits between Curated For You and Book An Appointment. ── */}

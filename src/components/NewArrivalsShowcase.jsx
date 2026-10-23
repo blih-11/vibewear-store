@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
 import { optimizeImage } from '../lib/optimizeImage';
 import PagedCarousel from './PagedCarousel';
+import { productPath } from '../lib/productUrl';
 
 export default function NewArrivalsShowcase({
   products = [],
@@ -26,7 +27,7 @@ export default function NewArrivalsShowcase({
   ));
 
   const renderCard = (p) => (
-    <div key={p._id} className="na-showcase__card" onClick={() => navigate(`/products/${p._id || p.id}`)}>
+    <div key={p._id} className="na-showcase__card" onClick={() => navigate(productPath(p))}>
       <div className="na-showcase__img">
         <img src={optimizeImage(p.image, { width: 600 })} alt={p.name} loading="lazy" />
       </div>

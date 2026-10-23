@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCurrency } from '../context/CurrencyContext';
+import { productPath } from '../lib/productUrl';
 
 function FeaturedItem({ product, dark, loading }) {
   const { formatPrice } = useCurrency();
@@ -22,7 +23,7 @@ function FeaturedItem({ product, dark, loading }) {
     );
   }
   return (
-    <Link to={`/products/${product._id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
+    <Link to={productPath(product)} style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}>
       <div style={{ borderTop: `1px solid ${dividerColor}`, marginBottom: '14px' }} />
       <div style={{ position: 'relative', aspectRatio: '3/4', background: 'transparent', marginBottom: '10px', overflow: 'hidden' }}>
         <img src={product.image} alt={product.name}

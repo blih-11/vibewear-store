@@ -22,6 +22,8 @@ export default function Seo({
   path = '/',
   image = DEFAULT_IMAGE,
   noindex = false,
+  ogType = 'website',
+  jsonLd = null, // object or array of schema.org objects (e.g. Product, BreadcrumbList)
 }) {
   const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Streetwear & Fits Online`;
   const url = `${SITE_URL}${path}`;
@@ -33,7 +35,7 @@ export default function Seo({
       <link rel="canonical" href={url} />
       <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow'} />
 
-      <meta property="og:type" content="website" />
+      <meta property="og:type" content={ogType} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:title" content={fullTitle} />
       <meta property="og:description" content={description} />
@@ -44,6 +46,9 @@ export default function Seo({
       <meta name="twitter:title" content={fullTitle} />
       <meta name="twitter:description" content={description} />
       <meta name="twitter:image" content={image} />
+      {jsonLd && (
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      )}
     </Helmet>
   );
 }

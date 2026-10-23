@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { useCurrency } from '../context/CurrencyContext';
 import Seo from '../components/Seo';
+import { productPath } from '../lib/productUrl';
 
 export default function Cart() {
   const navigate = useNavigate();
@@ -55,14 +56,14 @@ export default function Cart() {
                 <img
                   src={item.image}
                   alt={item.name}
-                  onClick={() => navigate(`/products/${item._id || item.id}`)}
+                  onClick={() => navigate(productPath(item))}
                   className="w-20 h-24 sm:w-28 sm:h-32 object-cover bg-gray-50 flex-shrink-0 cursor-pointer"
                 />
 
                 <div className="flex-1 min-w-0 flex flex-col md:flex-row md:items-start md:justify-between gap-3">
                   <div className="min-w-0">
                     <h4
-                      onClick={() => navigate(`/products/${item._id || item.id}`)}
+                      onClick={() => navigate(productPath(item))}
                       className="text-black text-[15px] font-medium leading-snug cursor-pointer hover:opacity-70 transition-opacity"
                     >
                       {item.name}

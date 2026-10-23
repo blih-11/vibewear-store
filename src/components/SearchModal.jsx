@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { fetchProducts } from '../lib/api';
 import { optimizeImage } from '../lib/optimizeImage';
+import { productPath } from '../lib/productUrl';
 
 export default function SearchModal() {
   const { searchOpen, setSearchOpen } = useCart();
@@ -34,7 +35,7 @@ export default function SearchModal() {
       ).slice(0, 6)
     : [];
 
-  const handleSelect = (product) => { setSearchOpen(false); navigate(`/products/${product._id}`); };
+  const handleSelect = (product) => { setSearchOpen(false); navigate(productPath(product)); };
 
   return (
     <>

@@ -6,6 +6,7 @@ import ProductCard from '../components/ProductCard';
 import PageLoader from '../components/PageLoader';
 import Seo from '../components/Seo';
 import { optimizeImage } from '../lib/optimizeImage';
+import { productPath, extractProductId } from '../lib/productUrl';
 
 const SITE_URL = 'https://vibewear.online';
 
@@ -14,7 +15,8 @@ const ALL_SIZES = ['S', 'M', 'L', 'XL', 'XXL'];
 const BRAND_LABEL = 'Vibe Wear';
 
 export default function ProductDetail() {
-  const { id } = useParams();
+  const { id: routeParam } = useParams();
+  const id = extractProductId(routeParam); // works for both /products/<id> and /products/<slug>-<id>
   const navigate = useNavigate();
   const { requestAddToCart } = useCart();
   const { formatPrice } = useCurrency();
@@ -59,11 +61,18 @@ export default function ProductDetail() {
       .finally(() => setLoading(false));
   }, [id]);
 
+  // Old links (bare id, or a slug from before the product was renamed) → redirect to the canonical address
+  useEffect(() => {
+    if (!product || String(product._id || product.id) !== id) return;
+    const canonical = productPath(product);
+    if (canonical !== `/products/${routeParam}`) navigate(canonical, { replace: true });
+  }, [product, id, routeParam, navigate]);
+
   if (loading) return <PageLoader />;
 
   if (!product) return (
     <div style={{ minHeight: '100vh', background: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
-      <Seo title="Product Not Found" path={`/products/${id}`} noindex />
+      <Seo title="Product Not Found" path={`/products/${routeParam}`} noindex />
       <h2 style={{ fontWeight: 800, fontSize: '1.5rem' }}>Product not found</h2>
       <button onClick={() => navigate('/products')} style={{ color: '#aaa', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem', textDecoration: 'underline' }}>Browse Products</button>
     </div>
@@ -94,15 +103,48 @@ export default function ProductDetail() {
 
   const productId = product._id || product.id;
   const productImage = images[0]?.startsWith('http') ? images[0] : `${SITE_URL}${images[0]}`;
-  const plainDescription = (product.description || `${product.name} — available now at Vibewear.`).slice(0, 160);
+  const plainDescription = (product.description || `${product.name} — available now at Vibewear.`)
+    .replace(/[*\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160);
+  const canonicalPath = productPath(product);
+  const absImages = images.filter(Boolean).map(i => (i.startsWith('http') ? i : `${SITE_URL}${i}`));
+
+  // Structured data so Google can show price + availability under the listing
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      image: absImages,
+      description: plainDescription,
+      sku: String(productId),
+      offers: {
+        '@type': 'Offer',
+        url: `${SITE_URL}${canonicalPath}`,
+        priceCurrency: 'GHS',
+        price: Number(product.price).toFixed(2),
+        availability: product.inStock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Shop', item: `${SITE_URL}/products` },
+        { '@type': 'ListItem', position: 3, name: product.name, item: `${SITE_URL}${canonicalPath}` },
+      ],
+    },
+  ];
 
   return (
     <div style={{ background: '#fff', minHeight: '100vh', paddingTop: '64px' }}>
       <Seo
         title={product.name}
         description={plainDescription}
-        path={`/products/${productId}`}
+        path={canonicalPath}
         image={productImage}
+        ogType="product"
+        jsonLd={jsonLd}
       />
       <div style={{ maxWidth: 1280, margin: '0 auto', padding: '2rem 1.5rem 0' }}>
         {/* Breadcrumb */}
@@ -130,7 +172,7 @@ export default function ProductDetail() {
                       width: '100%', aspectRatio: '3/4', overflow: 'hidden', padding: 0, cursor: 'pointer',
                       border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
                     }}>
-                    <img src={optimizeImage(img, { width: 300 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                    <img src={optimizeImage(img, { width: 300 })} alt={`${product.name} thumbnail`} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
               </div>
@@ -167,7 +209,7 @@ export default function ProductDetail() {
                       width: '64px', height: '80px', flexShrink: 0, overflow: 'hidden', padding: 0, cursor: 'pointer',
                       border: '2px solid', borderColor: selectedImg === i ? '#000' : '#e5e5e5', background: '#f8f8f8',
                     }}>
-                    <img src={optimizeImage(img, { width: 200 })} alt="" style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
+                    <img src={optimizeImage(img, { width: 200 })} alt={`${product.name} thumbnail`} style={{ width: '100%', height: '100%', objectFit: 'contain', mixBlendMode: 'multiply' }} />
                   </button>
                 ))}
               </div>

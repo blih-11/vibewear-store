@@ -150,3 +150,8 @@ export async function fetchInstagramPosts() {
   const res = await fetch(`${BASE}/instagram`);
   return res.json();
 }
+// ── Fits (curated bundles shown in "Curated For You") ─────────────────────────
+export async function fetchFits() {
+  const res = await fetch(`${BASE}/fits`, { cache: 'no-store' });
+  return res.json();
+}
